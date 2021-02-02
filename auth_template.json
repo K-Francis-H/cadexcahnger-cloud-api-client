@@ -1,0 +1,6 @@
+{
+	"client_id":<String>,
+	"client_secret":<String>,
+	"grant_type":"client_credentials",
+	"scope":"user:read data:read data:create data:write data:convert"
+}
