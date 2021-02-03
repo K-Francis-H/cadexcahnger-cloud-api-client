@@ -11,7 +11,7 @@
 				const {ipcRenderer, dialog} = require("electron");
 				const fs = require("fs");
 				const AUTH = JSON.parse(fs.readFileSync("auth.json", "utf8"));
-				//TODO cannot load module....
+				//TODO if AUTH doesnot exist cant be loaded pop a dialog asking user to give us the creds
 				const API = require("./auth_convert_dl.js")(AUTH);
 				console.log(AUTH);
 				console.log(API);
@@ -21,13 +21,23 @@
 					console.log(user);
 					API.v1.DATA.GET.FILES(
 				});*/
+				/*API.meta.getUserInfo( (user) => {
+					API.v1.DATA.GET.listFolders(user.user.rootFolder, (folders) => {
+						//todo list folders
+						console.log(folders);
+						for(let i=0; i < folders.folders.length; i++){
+							createFolderCard(folders.folders[i]);
+						}
+					});
+				});
 				API.v1.DATA.GET.FILES(null, (files) => {
 					console.log(files);
 					for(let i=0; i < files.files.length; i++){
 						//TODO list the files as cards in the curent window
 						createFileCard(files.files[i]);
 					}
-				});
+				});*/
+				refresh();
 
 				document.getElementById("upload").addEventListener("click", () => {
 					ipcRenderer.send('uploadFile');//TODO use second param to identify context and recieve it back!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! so we know which API call to use
@@ -56,6 +66,9 @@
 				document.getElementById("context-download").addEventListener("click", (e) => {
 					if(fileContext){
 						console.log("download: "+fileContext.name);
+						//API.v1.DATA.GET.FILES_ID(fileContext.id, (res) => {
+						//ask dialog to save file somewhere
+						//}
 					}
 				});
 				document.getElementById("context-convert").addEventListener("click", (e) => {
@@ -73,7 +86,32 @@
 						console.log("delete: "+fileContext.name);
 					}
 				});
+
+				function refresh(folder){
+					API.meta.getUserInfo( (user) => {
+						if(!folder){
+							folder = user.user.rootFolder
+						}
+						API.v1.DATA.GET.listFolders(folder, (folders) => {
+							//list folders
+							console.log(folders);
+							for(let i=0; i < folders.folders.length; i++){
+								createFolderCard(folders.folders[i]);
+							}
+						});
+						//TODO this way of passing seems crufty are there even other params?
+						API.v1.DATA.GET.FILES({parentFolder: folder}, (files) => {
+							console.log(files);
+							for(let i=0; i < files.files.length; i++){
+								//list the files as cards in the curent window
+								createFileCard(files.files[i]);
+							}
+						});
+					});
+					
+				}
 			});
+
 
 			function createFileCard(file){
 				let card = document.createElement("DIV");
@@ -129,11 +167,29 @@
 					} 
 				};
 
-				document.body.appendChild(card);
+				document.getElementById("card-section").appendChild(card);
 			}
 
 			function createFolderCard(folder){
-				//TODO
+				let card = document.createElement("DIV");
+				card.classList.add("card");
+
+				let img = document.createElement("IMG");
+				img.src = "folder.svg";
+				img.classList.add("card-img");
+				card.appendChild(img);
+
+				let container = document.createElement("DIV");
+				container.classList.add("container");
+				let title = document.createElement("H4");
+				title.innerText = folder.name;
+				container.appendChild(title);
+
+				card.appendChild(container);
+
+				//TODO onclicks
+
+				document.getElementById("card-section").appendChild(card);
 			}
 
 			function hideMenu() { 
@@ -155,5 +211,6 @@
 			</ul> 
 		</div> 
 		<button id="upload">Upload</button>
+		<div id="card-section"></div>
 	</body>
 </html>

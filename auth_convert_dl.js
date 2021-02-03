@@ -131,12 +131,14 @@ function setContent(opt, type, size){
 module.exports = function(authObj){
 //authObj = AUTH_PAYLOAD
 /*const API =	*/return {
-/*		meta : {
-			getUserInfo(callback){
-				
+		meta : {
+			getUserInfo: function(callback){
+				checkAuth(authObj, () => {
+					checkInfo(callback);
+				});
 			}
 		},
-*/
+
 		v1 : {
 			ACCOUNT : {
 				GET : {
@@ -197,9 +199,11 @@ module.exports = function(authObj){
 					},
 
 					FOLDERS : function(query /*nullable*/, callback){
+						//query = query || {};
 						checkAuth(authObj, () => {
 							checkInfo( (res) => {
 								//parentFolder is a must in query if its null/unbdefined/{}
+								console.log(query);
 								if(!query){
 									query = {
 										parentFolder : res.rootFolder
@@ -219,6 +223,21 @@ module.exports = function(authObj){
 					FILES_EXTENSIONS : function(callback){
 						checkAuth(authObj, () => {
 							getRequest(setAuth(TOKEN, FILES_EXTENSIONS), callback);
+						});
+					},
+
+					//not explicitly listed in API but is a link from FOLDERS, FOLDERS_ID
+					listFolders: function(parent, callback){
+						checkAuth(authObj, () => {
+							//TODO check info and just use roo/parent folder if none provided
+							getRequest(
+								setAuth(TOKEN,
+									{
+										method : "GET",
+										path : "/folders/"+parent+"/folders"
+									}),
+								callback
+							);
 						});
 					}
 				},
@@ -706,6 +725,7 @@ const FILES_ID = function(method, id){
 		opt.headers = opt.headers || {};
 		opt.headers['Content-type'] = 'application/json';
 	}
+	return opt;
 }
 
 const FILES_SHARING = function(method, id){
@@ -748,17 +768,19 @@ const FOLDERS = function(method, query){
 		opt.headers = opt.headers || {};
 		opt.headers['Content-type'] = 'application/json';
 	}
+	return opt;
 }
 
 const FOLDERS_ID = function(method, id){
 	//methods : {GET, PUT, DELETE}
-	return {
+	let opt = {
 		method : method,
 		path : "/folders/"+id
 	}
 	if(method === "PUT"){
 		opt.headers['Content-type'] = 'application/json';
 	}
+	return opt;
 };
 
 const FILES_EXTENSIONS = {
@@ -798,6 +820,7 @@ const EMBEDDED_VIEWER = function(id, cameraType, displayMode){
 		method : "GET",
 		path : "/embedded.html?fileId="+id
 	};
+	return opt;
 };
 
 
