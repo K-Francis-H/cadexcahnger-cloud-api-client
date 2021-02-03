@@ -131,13 +131,23 @@ function setContent(opt, type, size){
 module.exports = function(authObj){
 //authObj = AUTH_PAYLOAD
 /*const API =	*/return {
+/*		meta : {
+			getUserInfo(callback){
+				
+			}
+		},
+*/
 		v1 : {
 			ACCOUNT : {
 				GET : {
 					USERS_ME : function(callback){
 						checkAuth(authObj, () => {
-							getRequest(setAuth(TOKEN, GET_USERS_ME), (res) => {
+							/*getRequest(setAuth(TOKEN, GET_USERS_ME), (res) => {
 								callback(res);
+							});*/
+							checkInfo( (res) => {
+								USER_INFO = res.user;
+								callback(res.user);
 							});
 						});
 					}
