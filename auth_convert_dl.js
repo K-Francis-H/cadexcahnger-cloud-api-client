@@ -1,13 +1,13 @@
 const fs = require("fs");
 const https = require("https");
 const qs = require("querystring");
-const FormData = require("form-data");
+//const FormData = require("form-data");
 
 //multipart/form-data boundary
 const BOUNDARY = "---321lAzYAnDImYoUnG123---"
 
 //load up the users client_secret/id and permissions
-const AUTH_PAYLOAD = JSON.parse(fs.readFileSync(process.argv[2]));
+//const AUTH_PAYLOAD = JSON.parse(fs.readFileSync(process.argv[2]));
 
 var TOKEN = false;
 
@@ -71,7 +71,7 @@ function bodyRequest(opt, payload, callback){
 
 function encodeMultipartFormDataFromFile(name, fileName){
 	let buffer = fs.readFileSync(fileName);
-	let keyBuffer = Buffer.from(BOUNDARY+"\r\nContent-Disposition: form-data; name=\""+name+"\"; filename=\""+fileName+"\"\r\n\Content-Type: application/octet-stream\r\n\r\n");
+	let keyBuffer = Buffer.from(BOUNDARY+"\r\nContent-Disposition: form-data; name=\""+name+"\"; filename=\""+fileName+"\"\r\nContent-Type: application/octet-stream\r\n\r\n");
 	let endBuffer = Buffer.from("\r\n"+BOUNDARY+"--\r\n");
 
 	return Buffer.concat([keyBuffer, buffer, endBuffer]);
@@ -128,9 +128,9 @@ function setContent(opt, type, size){
 
 //const API = module.exports(AUTH_PAYLOAD);
 
-//module.exports = function(authObj){
-authObj = AUTH_PAYLOAD
-const API =	/*return*/ {
+module.exports = function(authObj){
+//authObj = AUTH_PAYLOAD
+/*const API =	*/return {
 		v1 : {
 			ACCOUNT : {
 				GET : {
@@ -146,7 +146,9 @@ const API =	/*return*/ {
 
 			DATA : {
 				GET : {
+					//query can be null/undefined/{} since this method will lookup necessary params if they are not provided
 					FILES : function(query, callback){
+						query = query || {};
 						checkAuth(authObj, () => {
 							checkInfo( (res) => {
 								USER_INFO = res.user;
@@ -430,12 +432,13 @@ const API =	/*return*/ {
 				GET : {
 					EMBEDDED_VIEWER : function(id, cameraType, displayMode, callback){
 						//TODO
+						//getRequest(
 					}
 				}
 			}
 		}
 	}
-//}TODO----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+}//TODO----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 function conversionParametersBuilder(format, opt){
 
@@ -641,7 +644,8 @@ function setAuthTimeout(ttl){//ttl in seconds
 
 function checkInfo(callback){
 	if(!USER_INFO){
-		module.exports.v1.ACCOUNT.GET.USERS_ME(callback)
+		//module.exports.v1.ACCOUNT.GET.USERS_ME(callback)
+		user(TOKEN, callback);
 	}else{
 		callback(USER_INFO);
 	}
@@ -780,7 +784,7 @@ const CONVERSIONS_RESULT = function(id){
 };
 
 const EMBEDDED_VIEWER = function(id, cameraType, displayMode){
-	return {
+	let opt = {
 		method : "GET",
 		path : "/embedded.html?fileId="+id
 	};
@@ -789,7 +793,7 @@ const EMBEDDED_VIEWER = function(id, cameraType, displayMode){
 
  
 const USERS = {};
-
+/*
 auth(AUTH_PAYLOAD, (authObject) => {
 	let token = authObject.access_token;
 	user(token, (res) => {
@@ -803,10 +807,11 @@ auth(AUTH_PAYLOAD, (authObject) => {
 			"3dm",
 			{ "Rhino" : {"export" : { "version" : 4 } } },
 			console.log
-		);*/
+		);
 	});
 	 
 });
+*/
 
 function listFiles(lsResult){
 	let files = lsResult.files;

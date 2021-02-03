@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Hello World!</title>
+		<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" />
+		<script>
+			document.addEventListener("DOMContentLoaded", () => {
+				const fs = require("fs");
+				const AUTH = JSON.parse(fs.readFileSync("auth.json", "utf8"));
+				//TODO cannot load module....
+				const API = require("./auth_convert_dl.js")(AUTH);
+				console.log(AUTH);
+				console.log(API);
+
+				//now load up user and files
+				/*API.v1.ACCOUNT.GET.USERS_ME( (user) => {
+					console.log(user);
+					API.v1.DATA.GET.FILES(
+				});*/
+				API.v1.DATA.GET.FILES(null, (files) => {
+					console.log(files);
+				});
+			});
+		</script>
+	</head>
+	<body>
+		<!--TODO list files and show embedded viewer for each-->
+		<h1>Hello World!</h1>
+      We are using node <script>document.write(process.versions.node)</script>,
+      Chrome <script>document.write(process.versions.chrome)</script>,
+      and Electron <script>document.write(process.versions.electron)</script>.
+	</body>
+</html>

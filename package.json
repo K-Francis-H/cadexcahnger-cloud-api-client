@@ -1,0 +1,10 @@
+{
+	"name": "cadexchanger-api-client",
+	"version": "0.1.0",
+	"author": "Kyle Harrity",
+	"description": "UI and API client for CADExchanger Cloud Service",
+	"main": "main.js",
+	"scripts": {
+		"start": "electron ."
+	}
+}
