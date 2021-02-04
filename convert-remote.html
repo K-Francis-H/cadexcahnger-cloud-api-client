@@ -67,6 +67,7 @@
 				"perPart",
 				"perAssembly"
 			];
+			//TODO add tooltips based on descriptions from cadexchanger
 			const PARAMS = {
 				"IGES" : {
 					"export" : {
@@ -360,23 +361,42 @@
 							let el;
 							console.log(p)
 							if(p.type === "boolean"){
-								el = document.createElement("INPUT");
-								el.type = "checkbox";
-								el.label = params[i];
-								el.checked = p.default === true ? "checked" : "";
-								el.value = params[i]
+								let inp = document.createElement("INPUT");
+								inp.type = "checkbox";
+								inp.checked = p.default === true ? "checked" : "";
+								inp.value = params[i]
+
+								let label = document.createElement("LABEL");
+								label.innerText = params[i];
+
+								el = document.createElement("DIV");
+								el.appendChild(inp);
+								el.appendChild(label);
 							}
 							//else if(p.type === "string" && !p.options){
 							//	el = document.createElement(
 							//}
 							else if(p.type === "number" && !p.options){
+								let label = document.createElement("LABEL");
+								label.innerText = params[i];
 								//TODO add an element that is of type input number
-								el = document.createElement("INPUT");
-								el.type = "number";
-								el.value=p.default;
+								let inp = document.createElement("INPUT");
+								inp.type = "number";
+								inp.value=p.default;
+
+								el = document.createElement("DIV");
+								el.appendChild(label);
+								el.appendChild(inp);
 							}
 							else if(p.options){
-								el = createSelect(p.options);
+								let label = document.createElement("LABEL");
+								label.innerText = params[i];
+
+								let inp = createSelect(p.options);
+
+								el = document.createElement("DIV");
+								el.appendChild(label);
+								el.appendChild(inp);
 							}
 							console.log(el);
 							//TODO any edge cases...
