@@ -79,7 +79,8 @@
 						"writemode" : {
 							"type" : "string",
 							"options" : ["msbo", "boundedsurfaces"],
-							"default" : "msbo"
+							"default" : "msbo",
+							"tooltip" : "Specifies preferred type of topological entities. The following values are supported:\nboundedsurfaces - use Bounded Surface (type 143) when writing solid or sheet bodies.\nmsbo - use Manifold Solid B-Rep (type 186) when writing solid bodies and Bounded Surface (type 143) when writing sheet bodies."
 						}
 					}
 				},
@@ -88,7 +89,8 @@
 						"preferredBodyType" : {
 							"type" : "string",
 							"options" : ["auto", "all", "advancedBRep", "manifoldSurface", "nonManifoldSurface", "edgeBasedWireFrame"],
-							"default" : "auto"
+							"default" : "auto",
+							"tooltip" : "Specifies the preferred B-Rep shape representation type, which should be imported. The following values are supported:\nauto - the most appropriate representation is chosen automatically.\nall - all representations are imported. This includes the main representation and all connected to it via relationships.\nadvancedBRep - prefer ADVANCED_BREP_SHAPE_REPRESENTATION, which stores solid bodies.\nmanifoldSurface - prefer MANIFOLD_SURFACE_SHAPE_REPRESENTATION, which stores sheet bodies with shells.\nnonManifoldSurface - prefer NON_MANIFOLD_SURFACE_SHAPE_REPRESENTATION, which stores sheet bodies with faces.\nedgeBasedWireframe - prefer EDGE_BASED_WIREFRAME_SHAPE_REPRESENTATION, which stores wireframe bodies.\nIn case the preferred representation cannot be found, the first appropriate is imported."
 						}
 					},
 					"export" : {
@@ -104,7 +106,8 @@
 						},
 						"savePCurves" : {
 							"type" : "boolean",
-							"default" : false
+							"default" : false,
+							"tooltip" : "Specifies whether p-curves (edge curves in 2D parametric space of face surfaces) should be written. Writing p-curves can be helpful for certain receiving CAD systems to import data from STEP files. However writing p-curves can increase an output file size considerably."
 						}
 					}
 				},
@@ -126,11 +129,13 @@
 						},
 						"saveBRep" : {
 							"type" : "boolean",
-							"default" : true
+							"default" : true,
+							"tooltip" : "Specifies whether part B-Rep representations should be saved."
 						},
 						"savePoly" : {
 							"type" : "boolean",
-							"default" : true
+							"default" : true,
+							"tooltip" : "Specifies whether polygonal representations should be saved."
 						},
 						"units" : {
 							"type" : "Length Units",
@@ -157,11 +162,13 @@
 						},
 						"readHidden" : {
 							"type" : "boolean",
-							"default" : false
+							"default" : false,
+							"tooltip" : "Specifies whether the hidden objects should be read."
 						},
 						"readPCurves" : {
 							"type" : "boolean",
-							"default" : true
+							"default" : true,
+							"tooltip" : "Specifies whether original parametric curves should be read from the file and impact on the reconstruction of BRep representation."
 						}
 					},
 					"export" : {
@@ -172,11 +179,13 @@
 						},
 						"saveBRep" : {
 							"type" : "boolean",
-							"default" : true
+							"default" : true,
+							"tooltip" : "Specifies whether part B-Rep representations should be saved."
 						},
 						"savePoly" : {
 							"type" : "boolean",
-							"default" : true
+							"default" : true,
+							"tooltip" : "Specifies whether polygonal representations should be saved."
 						},
 						"units" : {
 							"type" : "Length Units",
@@ -194,7 +203,8 @@
 						},
 						"text" : {
 							"type" : "boolean",
-							"default" : false
+							"default" : false,
+							"tooltip" : "Specifies whether generated file should be written in text form (true) or binary form (false)."
 						},
 						"units" : {
 							"type" : "Length Units",
@@ -207,7 +217,8 @@
 					"import" : {
 						"grouping" : {
 							"type" : "boolean",
-							"default" : false
+							"default" : false,
+							"tooltip" : "Specifies whether forced grouping should be enabled to reduce amount of created parts."
 						},
 						"units" : {
 							"type" : "Length Units",
@@ -218,19 +229,23 @@
 					"export" : {
 						"overrideDuplicateNames" : {
 							"type" : "boolean",
-							"default" : true
+							"default" : true,
+							"tooltip" : "Specifies whether original names should be supplemented by suffix(es) to provide unique name to every instance of the part. This allows to avoid merging of geometries of parts with same name during reading .obj file."
 						},
 						"saveNormals" : {
 							"type" : "boolean",
-							"default" : true
+							"default" : true,
+							"tooltip" : "Specifies whether vertex normal should be saved or not. When vertex normals are stored in the .obj file then the model can be displayed in smooth shading by third-party viewers. Otherwise the model will be displayed in flat shading only."
 						},
 						"generateMtl" : {
 							"type" : "boolean",
-							"default" : true
+							"default" : true,
+							"tooltip" : "Specifies whether material library should be generated or not. The material library contains materials used in the model. If the material library is not created then no colors or materials will be stored."
 						},
 						"replaceSpaces" : {
 							"type" : "boolean",
-							"default" : false
+							"default" : false,
+							"tooltip" : "Specifies whether space characters in part names should be replaced by '_' character or not. It can improve compatibility with receiving systems."
 						},
 						"units" : {
 							"type" : "Length Units",
@@ -250,11 +265,13 @@
 					"export" : {
 						"text" : {
 							"type" : "boolean",
-							"default" : false
+							"default" : false,
+							"tooltip" : "Specifies whether generated file should be written in text form (true) or binary form (false)."
 						},
 						"multipart" : {
 							"type" : "boolean",
-							"default" : true
+							"default" : true,
+							"tooltip" : "Specifies whether each body is saved in a separate [solid/endsolid] section in STL file."
 						},
 						"units" : {
 							"type" : "Length Units",
@@ -288,7 +305,8 @@
 						},
 						"saveNormals" : {
 							"type" : "boolean",
-							"default" : false
+							"default" : false,
+							"tooltip" : "Specifies whether vertex normal should be saved or not. When vertex normals are stored in the file then the model can be displayed in smooth shading by third-party viewers. Otherwise the model will be displayed in flat shading only."
 						}
 					}
 				},
@@ -305,12 +323,14 @@
 						"displayMode" : {
 							"type" : "string",
 							"options" : ["auto", "wireframe", "shaded", "shadedWithBoundaries"],
-							"default" : "auto" 
+							"default" : "auto",
+							"tooltip" : "Specifies display mode used for rendering. Should be one of auto, wireframe, shaded, shadedWithBoundaries. auto mode means to use shadedWithBoundaries for BRep representation and shaded otherwise." 
 						},
 						"representation" : {
 							"type" : "string",
 							"options" : ["auto", "brep", "poly", "finePoly", "mediumPoly", "coarsePoly"],
-							"default" : "auto"
+							"default" : "auto",
+							"tooltip" : "Specifies representation used for export. Should be one of auto, brep,poly, finePoly, mediumPoly, coarsePoly. auto mode means to use BRep representation if available and Poly otherwise."
 						},
 						"cameraProjection" : {
 							"type" : "string",
@@ -334,6 +354,22 @@
 					select.appendChild(option);
 				}
 				return select;
+			}
+
+			function createToolTipContainer(tip){
+				let container = document.createElement("DIV");
+				container.classList.add("tooltip");
+
+				let tipContainer = document.createElement("SPAN");
+				tipContainer.classList.add("tooltiptext");
+				tipContainer.innerText = tip;
+
+				container.appendChild(tipContainer);
+				return container;
+			}
+
+			function createAdditionalParams(root, params){
+				//TODO copy from below
 			}
 
 			document.addEventListener("DOMContentLoaded", () => {
@@ -360,6 +396,7 @@
 							let p = exparams.export[params[i]];
 							let el;
 							console.log(p)
+
 							if(p.type === "boolean"){
 								let inp = document.createElement("INPUT");
 								inp.type = "checkbox";
@@ -399,11 +436,27 @@
 								el.appendChild(inp);
 							}
 							console.log(el);
-							//TODO any edge cases...
-							document.getElementById("additional-params").appendChild(el);
+
+							if(p.tooltip){
+								let tip = createToolTipContainer(p.tooltip);
+								tip.appendChild(el);
+								document.getElementById("additional-params").appendChild(tip);
+								//add line break because tooltip div is inline-block
+								document.getElementById("additional-params").appendChild(document.createElement("BR"));
+							}else{
+								document.getElementById("additional-params").appendChild(el);
+							}
 						}
 					}
 				}
+
+				//TODO condense the above into functions
+
+				//TODO require("the_api") and implement a conversion alg
+				//keep checking til its done
+				//when its done download
+				
+				//TODO add import options? 
 
 				document.getElementById("export-format-select").appendChild(exportFormatSelect);
 				exportFormatSelect.onchange();
@@ -414,9 +467,14 @@
 		<!--TODO determine way to send context to onclick for each event below-->
 		<button id="back">Back</button> 
 		<button id="upload">Upload</button>
+		</br></br></br></br></br></br></br></br></br></br></br></br></br></br></br></br>
 		<div id="card-section">
-			<div id="export-format-select"></div>
-			<div id="export-ext-select"></div>
+			<div>
+				Format<span id="export-format-select"></span>
+			</div>
+			<div>
+				File Extension<span id="export-ext-select"></span>
+			</div>
 			<div id="additional-params"></div>
 		</div>
 	</body>
