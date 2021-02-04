@@ -148,7 +148,7 @@ module.exports = function(authObj){
 								callback(res);
 							});*/
 							checkInfo( (res) => {
-								USER_INFO = res.user;
+								USER_INFO = res;
 								callback(res.user);
 							});
 						});
@@ -163,7 +163,7 @@ module.exports = function(authObj){
 						query = query || {};
 						checkAuth(authObj, () => {
 							checkInfo( (res) => {
-								USER_INFO = res.user;
+								USER_INFO = res;
 								if(!query.parentFolder){
 									query.parentFolder = USER_INFO.rootFolder;
 								}
@@ -674,7 +674,9 @@ function setAuthTimeout(ttl){//ttl in seconds
 function checkInfo(callback){
 	if(!USER_INFO){
 		//module.exports.v1.ACCOUNT.GET.USERS_ME(callback)
-		user(TOKEN, callback);
+		user(TOKEN, (res) => {
+			callback(res.user);
+		});
 	}else{
 		callback(USER_INFO);
 	}

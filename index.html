@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<meta charset="UTF-8">
-		<title>Hello World!</title>
+		<title>CADExchanger Unofficial API Client</title>
 		<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" />
 		<link rel="stylesheet" href="style.css">
 		<script>
@@ -37,6 +37,9 @@
 						createFileCard(files.files[i]);
 					}
 				});*/
+
+				const BACK_STACK = [];
+				const WORKING_DIR = ["Home"];
 				refresh();
 
 				document.getElementById("upload").addEventListener("click", () => {
@@ -56,6 +59,11 @@
 							}
 						});
 					*/
+				});
+
+				document.getElementById("back").addEventListener("click", () => {
+					BACK_STACK.pop(); //remove current folder
+					refresh(BACK_STACK.pop());
 				});
 
 				ipcRenderer.on('fileUploadData', (event, data) => {
@@ -87,10 +95,17 @@
 					}
 				});
 
+				function updateWorkingDirectory(){
+					//TODO
+				}
+
 				function refresh(folder){
+					BACK_STACK.push(folder);
+					document.getElementById("card-section").innerHTML = "";
 					API.meta.getUserInfo( (user) => {
+						console.log(user);
 						if(!folder){
-							folder = user.user.rootFolder
+							folder = user.rootFolder
 						}
 						API.v1.DATA.GET.listFolders(folder, (folders) => {
 							//list folders
@@ -110,93 +125,124 @@
 					});
 					
 				}
-			});
+			
 
 
-			function createFileCard(file){
-				let card = document.createElement("DIV");
-				card.classList.add("card");
+				function createFileCard(file){
+					let card = document.createElement("DIV");
+					card.classList.add("card");
 		
-				//add viewer if file is public else use placeholder image
-				if(file.public){
-					let viewer = document.createElement("IFRAME");
-					viewer.src = "https://cloud.cadexchanger.com/embedded.html?fileId="+file.id;
-					viewer.width = "100%";
-					card.appendChild(viewer);
-				}else{
-					//add a generic cube image
-					let placeholder = document.createElement("IMG");
-					placeholder.src = "cube_placeholder.png";
-					placeholder.classList.add("card-img");
-					card.appendChild(placeholder);
+					//add viewer if file is public else use placeholder image
+					if(file.public){
+						let viewer = document.createElement("IFRAME");
+						viewer.src = "https://cloud.cadexchanger.com/embedded.html?fileId="+file.id;
+						viewer.width = "100%";
+						card.appendChild(viewer);
+					}else{
+						//add a generic cube image
+						let placeholder = document.createElement("IMG");
+						placeholder.src = "cube_placeholder.png";
+						placeholder.classList.add("card-img");
+						card.appendChild(placeholder);
+					}
+
+
+					//place file name
+					let container = document.createElement("DIV");
+					container.classList.add("container");
+
+					let title = document.createElement("H4");
+					title.innerText = file.name;
+					container.appendChild(title);
+
+					let sizeLabel = document.createElement("H4");
+					sizeLabel.innerText = prettySize(file.size);
+					container.appendChild(sizeLabel);
+				
+					card.appendChild(container);
+
+					//TODO attach onclicks/contextmenus for the file
+					//add delete capability
+					//add download capability
+					//add convert
+				
+					card.onclick = function(event){
+						//window.alert(file.id);
+						//goto new page with more info
+						//we do this by passing the file object to the main.js script
+						//then retrieving it on the new page
+					};
+					//TODO switch to a ... options bar, or just have the onclick change the page to file only with options
+					card.oncontextmenu = function(event){
+						//set the clicked file context
+						fileContext = file;
+
+						event.preventDefault();
+						if (document.getElementById( 
+							"contextMenu").style.display == "block") 
+							hideMenu(); 
+						else { 
+							var menu = document 
+							    .getElementById("contextMenu") 
+							      
+							menu.style.display = 'block'; 
+							menu.style.left = event.pageX + "px"; 
+							menu.style.top = event.pageY + "px"; 
+						} 
+					};
+
+					document.getElementById("card-section").appendChild(card);
 				}
 
+				function createFolderCard(folder){
+					let card = document.createElement("DIV");
+					card.classList.add("card");
 
-				//place file name
-				let container = document.createElement("DIV");
-				container.classList.add("container");
-				let title = document.createElement("H4");
-				title.innerText = file.name;
-				container.appendChild(title);
-				
-				card.appendChild(container);
+					let img = document.createElement("IMG");
+					img.src = "folder.svg";
+					img.classList.add("card-img");
+					card.appendChild(img);
 
-				//TODO attach onclicks/contextmenus for the file
-				//add delete capability
-				//add download capability
-				//add convert
-				
-				card.onclick = function(){
-					window.alert(file.id);
-				};
-				card.oncontextmenu = function(event){
-					//set the clicked file context
-					fileContext = file;
+					let container = document.createElement("DIV");
+					container.classList.add("container");
+					let title = document.createElement("H4");
+					title.innerText = folder.name;
+					container.appendChild(title);
 
-					event.preventDefault();
-					if (document.getElementById( 
-						"contextMenu").style.display == "block") 
-						hideMenu(); 
-					else { 
-						var menu = document 
-						    .getElementById("contextMenu") 
-						      
-						menu.style.display = 'block'; 
-						menu.style.left = event.pageX + "px"; 
-						menu.style.top = event.pageY + "px"; 
-					} 
-				};
+					card.appendChild(container);
 
-				document.getElementById("card-section").appendChild(card);
-			}
+					//TODO onclicks
+					card.onclick = function(){
+						//navigate inside
+						WORKING_DIRECTORY.push(folder.name);
+						refresh(folder.id);
+					}
 
-			function createFolderCard(folder){
-				let card = document.createElement("DIV");
-				card.classList.add("card");
+					document.getElementById("card-section").appendChild(card);
+				}
 
-				let img = document.createElement("IMG");
-				img.src = "folder.svg";
-				img.classList.add("card-img");
-				card.appendChild(img);
+				function prettySize(bytes){
+					let index = 0;
+					let suffixes = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];					
+					while(bytes > 1000){
+						bytes = bytes/1000;
+						index++;
+					}
+					return bytes.toFixed(2)+suffixes[index];
+				}
 
-				let container = document.createElement("DIV");
-				container.classList.add("container");
-				let title = document.createElement("H4");
-				title.innerText = folder.name;
-				container.appendChild(title);
+				function hideMenu() { 
+					document.getElementById("contextMenu").style.display = "none";
+					fileContext = null;
+				}
 
-				card.appendChild(container);
+				document.onclick = hideMenu; 
 
-				//TODO onclicks
-
-				document.getElementById("card-section").appendChild(card);
-			}
-
-			function hideMenu() { 
-				document.getElementById("contextMenu").style.display = "none";
-				fileContext = null;
-			}
-			document.onclick = hideMenu; 
+				//DEBUG
+				document.getElementById("view-convert-page").addEventListener("click", () => {
+					location = "convert-remote.html";
+				}
+			});
 		</script>
 	</head>
 	<body>
@@ -209,8 +255,10 @@
 				<li id="context-properties"><a href="#">Properties</a></li>
 				<li id="context-delete"><a href="#">Delete</a></li> 
 			</ul> 
-		</div> 
+		</div>
+		<button id="back">Back</button> 
 		<button id="upload">Upload</button>
+		<button id="view-convert-page">View Convert Page</button>
 		<div id="card-section"></div>
 	</body>
 </html>

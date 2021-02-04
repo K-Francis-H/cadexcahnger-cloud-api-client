@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>CADExchanger Unofficial API Client</title>
+		<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" />
+		<link rel="stylesheet" href="style.css">
+		<script>
+			const EXPORT_FORMATS = {
+				"IGES" : [".igs", ".iges"],
+				"STEP" : [".stp", ".step"],
+				"ACIS" : [".sat"],
+				"ParaSolid" : [".x_t", ".x_b"],
+				"JT" : [".jt"],
+				"IFC" : [".ifc"],
+				"Rhino" : [".3dm"],
+				"BRep" : [".brep"],
+				"Collada" : [".dae"],
+				"DXF" : [".dxf"],
+				"FBX" : [".fbx"],
+				"glTF" : [".glb", ".gltf"],
+				"OBJ" : [".obj"],
+				"STL" : [".stl"],
+				"VRML" : [".wrl"],
+				"X3D" : [".x3d"],
+				"Image" : [".png", ".jpg", ".jpeg", ".bmp"],
+				"Archive" : [".zip"]
+			};
+			const IMPORT_FORMATS = {
+				"SolidWorks" : [".sldasm", ".sldpart"],
+				"Creo" : [".asm.*", ".prt.*"],
+				"NX" : [".prt"],
+				"IGES" : [".igs", ".iges"],
+				"STEP" : [".stp", ".step"],
+				"ACIS" : [".sat", ".sab"],
+				"ParaSolid" : [".x_t", ".x_b", ".xmt_txt", ".xmt_bin", ".xmp_txt", ".xmp_bin"],
+				"JT" : [".jt"],
+				"IFC" : [".ifc"],
+				"Rhino" : [".3dm"],
+				"BRep" : [".brep"],
+				"3DS" : [".3ds"],
+				"3MF" : [".3mf"],
+				"Collada" : [".dae"],
+				"DXF" : [".dxf"],
+				"FBX" : [".fbx"],
+				"glTF" : [".glb", ".gltf"],
+				"OBJ" : [".obj"],
+				"STL" : [".stl"],
+				"VRML" : [".wrl"],
+				"Archive" : [".zip"]
+			}
+			const LENGTH_UNITS = [
+				"mm",
+				"cm",
+				"m",
+				"in",
+				"ft",
+				"yd",
+				"μm",
+				"dm",
+				"km",
+				"mil",
+				"mi"
+			];
+			const SPLIT_MODE = [
+				"monolithic",
+				"perPart",
+				"perAssembly"
+			];
+			const PARAMS = {
+				"IGES" : {
+					"export" : {
+						"units" : {
+							"type" : "Length Units",
+							"options" : LENGTH_UNITS,
+							"default" : LENGTH_UNITS[0] //mm
+						},
+						"writemode" : {
+							"type" : "string",
+							"options" : ["msbo", "boundedsurfaces"],
+							"default" : "msbo"
+						}
+					}
+				},
+				"STEP" : {
+					"import" : {
+						"preferredBodyType" : {
+							"type" : "string",
+							"options" : ["auto", "all", "advancedBRep", "manifoldSurface", "nonManifoldSurface", "edgeBasedWireFrame"],
+							"default" : "auto"
+						}
+					},
+					"export" : {
+						"split" : {
+							"type" : "Split mode",
+							"options" : SPLIT_MODE,
+							"default" : SPLIT_MODE[0] //monolithic
+						},
+						"units" : {
+							"type" : "Length Units",
+							"options" : LENGTH_UNITS,
+							"default" : LENGTH_UNITS[0] //mm
+						},
+						"savePCurves" : {
+							"type" : "boolean",
+							"default" : false
+						}
+					}
+				},
+				"ACIS" : {
+					"export" : {
+						"version" : {
+							"type" : "number",
+							"options" : [4, 7],
+							"default" : 7
+						}
+					}
+				},
+				"JT" : {
+					"export" : {
+						"split" : {
+							"type" : "Split mode",
+							"options" : SPLIT_MODE,
+							"default" : SPLIT_MODE[0] //monolithic
+						},
+						"saveBRep" : {
+							"type" : "boolean",
+							"default" : true
+						},
+						"savePoly" : {
+							"type" : "boolean",
+							"default" : true
+						},
+						"units" : {
+							"type" : "Length Units",
+							"options" : LENGTH_UNITS,
+							"default" : LENGTH_UNITS[0] //mm
+						}
+					}
+				},
+				"IFC" : {
+					"export" : {
+						"units" : {
+							"type" : "Length Units",
+							"options" : LENGTH_UNITS,
+							"default" : LENGTH_UNITS[0] //mm
+						}
+					}
+				},
+				"Rhino" : {
+					"import" : {
+						"meshType" : {
+							"type" : "string",
+							"options" : ["default", "render", "analysis", "preview"],
+							"default" : "default"
+						},
+						"readHidden" : {
+							"type" : "boolean",
+							"default" : false
+						},
+						"readPCurves" : {
+							"type" : "boolean",
+							"default" : true
+						}
+					},
+					"export" : {
+						"version" : {
+							"type" : "number",
+							"options" : [2, 3, 4, 5, 6],
+							"default" : 6
+						},
+						"saveBRep" : {
+							"type" : "boolean",
+							"default" : true
+						},
+						"savePoly" : {
+							"type" : "boolean",
+							"default" : true
+						},
+						"units" : {
+							"type" : "Length Units",
+							"options" : LENGTH_UNITS,
+							"default" : LENGTH_UNITS[0] //mm
+						}
+					}
+				},
+				"FBX" : {
+					"export" : {
+						"version" : {
+							"type" : "number",
+							"options" : [2012, 2014, 2016, 2019],
+							"default" : 2012
+						},
+						"text" : {
+							"type" : "boolean",
+							"default" : false
+						},
+						"units" : {
+							"type" : "Length Units",
+							"options" : LENGTH_UNITS,
+							"default" : LENGTH_UNITS[0] //mm
+						}
+					}
+				},
+				"OBJ" : {
+					"import" : {
+						"grouping" : {
+							"type" : "boolean",
+							"default" : false
+						},
+						"units" : {
+							"type" : "Length Units",
+							"options" : LENGTH_UNITS,
+							"default" : LENGTH_UNITS[0] //mm
+						}
+					},
+					"export" : {
+						"overrideDuplicateNames" : {
+							"type" : "boolean",
+							"default" : true
+						},
+						"saveNormals" : {
+							"type" : "boolean",
+							"default" : true
+						},
+						"generateMtl" : {
+							"type" : "boolean",
+							"default" : true
+						},
+						"replaceSpaces" : {
+							"type" : "boolean",
+							"default" : false
+						},
+						"units" : {
+							"type" : "Length Units",
+							"options" : LENGTH_UNITS,
+							"default" : LENGTH_UNITS[0] //mm
+						}
+					}
+				},
+				"STL" : {
+					"import" : {
+						"units" : {
+							"type" : "Length Units",
+							"options" : LENGTH_UNITS,
+							"default" : LENGTH_UNITS[0] //mm
+						}
+					},
+					"export" : {
+						"text" : {
+							"type" : "boolean",
+							"default" : false
+						},
+						"multipart" : {
+							"type" : "boolean",
+							"default" : true
+						},
+						"units" : {
+							"type" : "Length Units",
+							"options" : LENGTH_UNITS,
+							"default" : LENGTH_UNITS[0] //mm
+						}
+					}
+				},
+				"VRML" : {
+					"import" : {
+						"units" : {
+							"type" : "Length Units",
+							"options" : LENGTH_UNITS,
+							"default" : LENGTH_UNITS[0] //mm
+						}
+					},
+					"export" : {
+						"units" : {
+							"type" : "Length Units",
+							"options" : LENGTH_UNITS,
+							"default" : LENGTH_UNITS[0] //mm
+						}
+					}
+				},
+				"X3D" : {
+					"export" : {
+						"units" : {
+							"type" : "Length Units",
+							"options" : LENGTH_UNITS,
+							"default" : LENGTH_UNITS[0] //mm
+						},
+						"saveNormals" : {
+							"type" : "boolean",
+							"default" : false
+						}
+					}
+				},
+				"Image" : {
+					"export" : {
+						"width" : {
+							"type" : "number",
+							"default" : 200
+						},
+						"height" : {
+							"type" : "number",
+							"default" : 200
+						},
+						"displayMode" : {
+							"type" : "string",
+							"options" : ["auto", "wireframe", "shaded", "shadedWithBoundaries"],
+							"default" : "auto" 
+						},
+						"representation" : {
+							"type" : "string",
+							"options" : ["auto", "brep", "poly", "finePoly", "mediumPoly", "coarsePoly"],
+							"default" : "auto"
+						},
+						"cameraProjection" : {
+							"type" : "string",
+							"options" : ["isometric", "perspective"],
+							"default" : "isometric"
+						}
+					}
+				}
+			};
+
+			function createSelect(list){
+				let select = document.createElement("SELECT");
+
+				//TODO disabled hint option
+				//let hintOPtion = document.createElement("
+
+				for(let i=0; i < list.length; i++){
+					let option = document.createElement("OPTION");
+					option.innerText = list[i];
+					option.value = list[i];
+					select.appendChild(option);
+				}
+				return select;
+			}
+
+			document.addEventListener("DOMContentLoaded", () => {
+				let exportFormatSelect = createSelect(Object.keys(EXPORT_FORMATS));
+				//exportFormatSelect.id="export-format";
+				exportFormatSelect.onchange = function(){
+					//find the selected option and use it to update
+					let selectedIndex = exportFormatSelect.selectedIndex;
+					let key = exportFormatSelect.options[selectedIndex];
+					//now update the extension list from this
+					let extSelect = createSelect(EXPORT_FORMATS[key.value]);
+					//TODO if length===1 just gray it out or maybe dont do anything
+					document.getElementById("export-ext-select").innerHTML = "";
+					document.getElementById("export-ext-select").appendChild(extSelect);
+
+					//TODO setup other parameters (export)
+					document.getElementById("additional-params").innerHTML = "";
+					console.log(key);
+					let exparams = PARAMS[key.value];
+					if(exparams && exparams.export){
+						//TODO add labels and tooltips
+						let params = Object.keys(exparams.export);
+						for(let i=0; i < params.length; i++){
+							let p = exparams.export[params[i]];
+							let el;
+							console.log(p)
+							if(p.type === "boolean"){
+								el = document.createElement("INPUT");
+								el.type = "checkbox";
+								el.label = params[i];
+								el.checked = p.default === true ? "checked" : "";
+								el.value = params[i]
+							}
+							//else if(p.type === "string" && !p.options){
+							//	el = document.createElement(
+							//}
+							else if(p.type === "number" && !p.options){
+								//TODO add an element that is of type input number
+								el = document.createElement("INPUT");
+								el.type = "number";
+								el.value=p.default;
+							}
+							else if(p.options){
+								el = createSelect(p.options);
+							}
+							console.log(el);
+							//TODO any edge cases...
+							document.getElementById("additional-params").appendChild(el);
+						}
+					}
+				}
+
+				document.getElementById("export-format-select").appendChild(exportFormatSelect);
+				exportFormatSelect.onchange();
+			});
+		</script>
+	</head>
+	<body>
+		<!--TODO determine way to send context to onclick for each event below-->
+		<button id="back">Back</button> 
+		<button id="upload">Upload</button>
+		<div id="card-section">
+			<div id="export-format-select"></div>
+			<div id="export-ext-select"></div>
+			<div id="additional-params"></div>
+		</div>
+	</body>
+</html>
