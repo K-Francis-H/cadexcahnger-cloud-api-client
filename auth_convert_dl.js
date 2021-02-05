@@ -22,20 +22,55 @@ function getRequest(opt, callback){
 	console.log(opt);
 
 	let resBody = "";
+	//let chunks = [];
+	//let dloadSize = 0;
 	const req = https.get(opt, (res) => {
-		res.setEncoding("utf8");
+		res.setEncoding("utf8"); //wait this needs to not be set until we know what we want...
 		res.on('data', function(chunk){
 			resBody += chunk;
+			//chunks.push(chunk);
+			//dloadSize += chunk.length;
 		});
 		res.on('end', function(){
 			console.log(resBody);
 			if(callback){
-				callback(JSON.parse(resBody));
+				//TODO alternatively do not set res.encoding, load a buffer and toString before JSON parse
+				//if(opt.returnData === "RAW"){
+				//	callback(res.body)//Buffer.concat(chunks));
+				//}else{
+					callback(JSON.parse(resBody));
+				//}
 			}
 		});
 	});
 	req.on('error', (e) => {
 		console.log(e.message);
+	});
+}
+
+//use this to download files and conversions
+//unfotunately node is trash so we have to
+//download into a tmp file then read that back into
+//a buffer in order to get the raw bytes of a response
+//instead of you know getting the raw bytes of a 
+//response. The "raw" response returned by chunks
+//is already encoded to a string type and corrupts the 
+//resulting file
+function getBufferRequest(opt, callback){
+
+	opt.host = "cloud.cadexchanger.com";
+	opt.protocol = "https:";
+	opt.path = "/api/v1" + opt.path;
+
+	const tmpFile = fs.createWriteStream("tmp.file");
+	const req = https.get(opt, (res) => {
+		res.pipe(tmpFile);
+
+		tmpFile.on('finish', () => {
+			//tmpFile.close();
+			callback(fs.readFileSync("tmp.file"));
+			fs.unlink("tmp.file", ()=>{});
+		});
 	});
 }
 
@@ -226,7 +261,7 @@ module.exports = function(authObj){
 						});
 					},
 
-					//not explicitly listed in API but is a link from FOLDERS, FOLDERS_ID
+					//not explicitly listed in API but is a link from FOLDERS, FOLDERS_ID response object
 					listFolders: function(parent, callback){
 						checkAuth(authObj, () => {
 							//TODO check info and just use roo/parent folder if none provided
@@ -235,6 +270,20 @@ module.exports = function(authObj){
 									{
 										method : "GET",
 										path : "/folders/"+parent+"/folders"
+									}),
+								callback
+							);
+						});
+					},
+
+					//also not explicitly listed but opening the console shows this to be a valid API call
+					downloadFile: function(id, callback){
+						checkAuth(authObj, () => {
+							getBufferRequest(
+								setAuth(TOKEN,
+									{
+										method : "GET",
+										path : "/files/"+id+"/source"
 									}),
 								callback
 							);
