@@ -8,7 +8,7 @@
 		<script>
 			var fileContext;
 			document.addEventListener("DOMContentLoaded", () => {
-				const {ipcRenderer, dialog} = require("electron");
+				const {ipcRenderer} = require("electron");
 				const fs = require("fs");
 				const AUTH = JSON.parse(fs.readFileSync("auth.json", "utf8"));
 				//TODO if AUTH doesnot exist cant be loaded pop a dialog asking user to give us the creds
@@ -71,17 +71,32 @@
 					//TODO figure out context and upload file or wahtever
 				});
 
+				ipcRenderer.on('log', (event, data) => {
+					console.log(data);
+				});
+
 				document.getElementById("context-download").addEventListener("click", (e) => {
 					if(fileContext){
 						console.log("download: "+fileContext.name);
-						//API.v1.DATA.GET.FILES_ID(fileContext.id, (res) => {
-						//ask dialog to save file somewhere
-						//}
+						let fileName = fileContext.name;
+						//ipcRenderer.send('download', fileContext.id);
+						API.v1.DATA.GET.downloadFile(fileContext.id, (res) => {
+							//ask dialog to save file somewhere
+							//get buffer from the res then
+							//ask the ipcMain to get a save location
+							//or actually just pass this there and pop it
+							//get body from res....
+							//should be a buffer
+							ipcRenderer.send('download', fileName, res);
+						});
 					}
 				});
 				document.getElementById("context-convert").addEventListener("click", (e) => {
 					if(fileContext){
 						console.log("convert: "+fileContext.name);
+						ipcRenderer.send('store', fileContext.id, fileContext);
+						location = "convert-remote.html?id="+fileContext.id;
+						
 					}
 				});
 				document.getElementById("context-properties").addEventListener("click", (e) => {
@@ -92,6 +107,21 @@
 				document.getElementById("context-delete").addEventListener("click", (e) => {
 					if(fileContext){
 						console.log("delete: "+fileContext.name);
+						//bring up dialog
+						/*let choice = dialog.showMessageBoxSync({
+							type: "question",
+							buttons : ["Confirm", "Cancel"],
+							title : "Delete File",
+							message : "Do you really want to delete "+fileContext.name+"?"
+						});
+						alert(choice); */
+						if(confirm("Do you really want to delete "+fileContext.name+"?") === true){
+							console.log("confirm delete");
+							API.v1.DATA.DELETE.FILES_ID(fileContext.id, (result) => {
+								let folderId = BACK_STACK[BACK_STACK.length-1];
+								refresh(folderId);
+							});
+						}
 					}
 				});
 
@@ -214,7 +244,7 @@
 					//TODO onclicks
 					card.onclick = function(){
 						//navigate inside
-						WORKING_DIRECTORY.push(folder.name);
+						WORKING_DIR.push(folder.name);
 						refresh(folder.id);
 					}
 
@@ -241,7 +271,7 @@
 				//DEBUG
 				document.getElementById("view-convert-page").addEventListener("click", () => {
 					location = "convert-remote.html";
-				}
+				});
 			});
 		</script>
 	</head>

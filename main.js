@@ -7,6 +7,12 @@ const url = require('url');
 const path = require('path');
 const fs = require('fs');
 
+const AUTH = JSON.parse(fs.readFileSync("auth.json", "utf8"));
+//TODO if AUTH doesnot exist cant be loaded pop a dialog asking user to give us the creds
+const API = require("./auth_convert_dl.js")(AUTH);
+
+const CACHE = {};//persistent cache object for storing data between html files
+
 let win
 
 function createWindow() {
@@ -29,6 +35,10 @@ function createWindow() {
 	}
 }
 
+function dlog(msg){
+	win.webContents.send('log', msg);
+}
+
 //TODO we need to know the context in which this was called on the renderer side. Try to just open and use dialog there...
 ipcMain.on('uploadFile', (event, path) => {
 	dialog.showOpenDialog({properties: ['openFile']}).then( (result) => {
@@ -40,9 +50,41 @@ ipcMain.on('uploadFile', (event, path) => {
 			}
 			event.sender.send("fileUploadData", file);
 		}else{
-			console.log("no file selected");
+			dlog("no file selected");
 		}
 	});
+});
+
+ipcMain.on('download', (event, name, data) => {
+	//let fileId = arg[0];
+	dlog(name);
+	//TODO recieve buffer or do all downloading from here...
+	//dialog.showSaveDialog(...()=>{});
+	//API.v1.DATA.GET.downloadFile(arg, (res) => {
+		//open save dialog then write buffer to file chosen by save dialog...
+		let path = dialog.showSaveDialogSync({
+			title : "Save File",
+			//defaultPath : "~/home/", //TODO make sure this works across Windows/Linux/macos else leave to default behavior
+			//
+			properties : ["showOverwriteConfirmation"]
+		});
+		fs.writeFileSync(path, data);//TODO hopefully these are the correct params
+	//});
+});
+
+//for these calls arg = [key, value]
+ipcMain.on('store', (event, key, value) => {
+	CACHE[key] = value;
+	dlog(CACHE);
+});
+
+ipcMain.on('retrieve', (event, key) => {
+	event.sender.send('retrieve', key, CACHE[key]);
+});
+
+ipcMain.on('retrieveAndDestroy', (event, key) => {
+	event.sender.send('retrieve', key, CACHE[key]);
+	delete CACHE[key];
 });
 
 app.whenReady().then(createWindow);

@@ -6,6 +6,8 @@
 		<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" />
 		<link rel="stylesheet" href="style.css">
 		<script>
+			
+
 			const EXPORT_FORMATS = {
 				"IGES" : [".igs", ".iges"],
 				"STEP" : [".stp", ".step"],
@@ -372,83 +374,89 @@
 				//TODO copy from below
 			}
 
-			document.addEventListener("DOMContentLoaded", () => {
-				let exportFormatSelect = createSelect(Object.keys(EXPORT_FORMATS));
-				//exportFormatSelect.id="export-format";
-				exportFormatSelect.onchange = function(){
-					//find the selected option and use it to update
-					let selectedIndex = exportFormatSelect.selectedIndex;
-					let key = exportFormatSelect.options[selectedIndex];
-					//now update the extension list from this
-					let extSelect = createSelect(EXPORT_FORMATS[key.value]);
-					//TODO if length===1 just gray it out or maybe dont do anything
-					document.getElementById("export-ext-select").innerHTML = "";
-					document.getElementById("export-ext-select").appendChild(extSelect);
+			function setupConversionOptions(exportFormatSelect){
+				//find the selected option and use it to update
+				let selectedIndex = exportFormatSelect.selectedIndex;
+				let key = exportFormatSelect.options[selectedIndex];
+				//now update the extension list from this
+				let extSelect = createSelect(EXPORT_FORMATS[key.value]);
+				//TODO if length===1 just gray it out or maybe dont do anything
+				document.getElementById("export-ext-select").innerHTML = "";
+				document.getElementById("export-ext-select").appendChild(extSelect);
 
-					//TODO setup other parameters (export)
-					document.getElementById("additional-params").innerHTML = "";
-					console.log(key);
-					let exparams = PARAMS[key.value];
-					if(exparams && exparams.export){
-						//TODO add labels and tooltips
-						let params = Object.keys(exparams.export);
-						for(let i=0; i < params.length; i++){
-							let p = exparams.export[params[i]];
-							let el;
-							console.log(p)
+				//TODO setup other parameters (export)
+				document.getElementById("additional-params").innerHTML = "";
+				console.log(key);
+				let exparams = PARAMS[key.value];
+				if(exparams && exparams.export){
+					//TODO add labels and tooltips
+					let params = Object.keys(exparams.export);
+					for(let i=0; i < params.length; i++){
+						let p = exparams.export[params[i]];
+						let el;
+						console.log(p)
 
-							if(p.type === "boolean"){
-								let inp = document.createElement("INPUT");
-								inp.type = "checkbox";
-								inp.checked = p.default === true ? "checked" : "";
-								inp.value = params[i]
+						if(p.type === "boolean"){
+							let inp = document.createElement("INPUT");
+							inp.type = "checkbox";
+							inp.checked = p.default === true ? "checked" : "";
+							inp.value = params[i]
 
-								let label = document.createElement("LABEL");
-								label.innerText = params[i];
+							let label = document.createElement("LABEL");
+							label.innerText = params[i];
 
-								el = document.createElement("DIV");
-								el.appendChild(inp);
-								el.appendChild(label);
-							}
-							//else if(p.type === "string" && !p.options){
-							//	el = document.createElement(
-							//}
-							else if(p.type === "number" && !p.options){
-								let label = document.createElement("LABEL");
-								label.innerText = params[i];
-								//TODO add an element that is of type input number
-								let inp = document.createElement("INPUT");
-								inp.type = "number";
-								inp.value=p.default;
+							el = document.createElement("DIV");
+							el.appendChild(inp);
+							el.appendChild(label);
+						}
+						//else if(p.type === "string" && !p.options){
+						//	el = document.createElement(
+						//}
+						else if(p.type === "number" && !p.options){
+							let label = document.createElement("LABEL");
+							label.innerText = params[i];
+							//TODO add an element that is of type input number
+							let inp = document.createElement("INPUT");
+							inp.type = "number";
+							inp.value=p.default;
 
-								el = document.createElement("DIV");
-								el.appendChild(label);
-								el.appendChild(inp);
-							}
-							else if(p.options){
-								let label = document.createElement("LABEL");
-								label.innerText = params[i];
+							el = document.createElement("DIV");
+							el.appendChild(label);
+							el.appendChild(inp);
+						}
+						else if(p.options){
+							let label = document.createElement("LABEL");
+							label.innerText = params[i];
 
-								let inp = createSelect(p.options);
+							let inp = createSelect(p.options);
 
-								el = document.createElement("DIV");
-								el.appendChild(label);
-								el.appendChild(inp);
-							}
-							console.log(el);
+							el = document.createElement("DIV");
+							el.appendChild(label);
+							el.appendChild(inp);
+						}
+						console.log(el);
 
-							if(p.tooltip){
-								let tip = createToolTipContainer(p.tooltip);
-								tip.appendChild(el);
-								document.getElementById("additional-params").appendChild(tip);
-								//add line break because tooltip div is inline-block
-								document.getElementById("additional-params").appendChild(document.createElement("BR"));
-							}else{
-								document.getElementById("additional-params").appendChild(el);
-							}
+						if(p.tooltip){
+							let tip = createToolTipContainer(p.tooltip);
+							tip.appendChild(el);
+							document.getElementById("additional-params").appendChild(tip);
+							//add line break because tooltip div is inline-block
+							document.getElementById("additional-params").appendChild(document.createElement("BR"));
+						}else{
+							document.getElementById("additional-params").appendChild(el);
 						}
 					}
 				}
+			}
+
+			document.addEventListener("DOMContentLoaded", () => {
+				const {ipcRenderer} = require("electron");
+
+				const exportFormatSelect = createSelect(Object.keys(EXPORT_FORMATS));
+				//exportFormatSelect.id="export-format";
+				exportFormatSelect.onchange = function(){
+					setupConversionOptions(exportFormatSelect);
+				};
 
 				//TODO condense the above into functions
 
@@ -460,14 +468,44 @@
 
 				document.getElementById("export-format-select").appendChild(exportFormatSelect);
 				exportFormatSelect.onchange();
+
+				document.getElementById("back").addEventListener("click", () => {
+					location="index.html";
+				});
+
+				//listen for ipcMains responses
+				ipcRenderer.on('retrieve', (event, id, file) => {
+					console.log(id);
+					console.log(file);
+
+					//TODO now setup the file div section
+				});
+				ipcRenderer.on('log', (event, data) => {
+					console.log(data);
+				});
+
+				//load up the file
+				let searchParams = new URLSearchParams(location.search);
+				if(searchParams.has("id")){
+					let id = searchParams.get("id");
+					console.log(id);
+					ipcRenderer.send('retrieveAndDestroy', id);
+				}else{	
+					//TODO error and return to main screen
+				}
+
+				
 			});
+			console.log(location);
 		</script>
 	</head>
 	<body>
 		<!--TODO determine way to send context to onclick for each event below-->
 		<button id="back">Back</button> 
-		<button id="upload">Upload</button>
 		</br></br></br></br></br></br></br></br></br></br></br></br></br></br></br></br>
+		<div id="file-section">
+			<!--TODO put file in here-->
+		</div>
 		<div id="card-section">
 			<div>
 				Format<span id="export-format-select"></span>
