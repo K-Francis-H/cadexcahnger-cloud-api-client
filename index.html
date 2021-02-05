@@ -59,6 +59,7 @@
 							}
 						});
 					*/
+					
 				});
 
 				document.getElementById("back").addEventListener("click", () => {
@@ -69,6 +70,15 @@
 				ipcRenderer.on('fileUploadData', (event, data) => {
 					console.log(data);
 					//TODO figure out context and upload file or wahtever
+					let args = {
+						fileName : data.name,
+						parentFolder : top(BACK_STACK)
+					};
+					API.v1.DATA.POST.FILES(args, (res) => {
+						console.log(res.toString());
+						console.log(res);
+						refresh(top(BACK_STACK));
+					});
 				});
 
 				ipcRenderer.on('log', (event, data) => {
@@ -100,6 +110,7 @@
 					}
 				});
 				document.getElementById("context-properties").addEventListener("click", (e) => {
+					//TODO make this pretty					
 					if(fileContext){
 						alert(JSON.stringify(fileContext, 4));
 					}
@@ -124,6 +135,10 @@
 						}
 					}
 				});
+
+				function top(list){
+					return list[list.length-1];
+				}
 
 				function updateWorkingDirectory(){
 					//TODO

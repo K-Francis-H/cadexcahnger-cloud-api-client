@@ -370,16 +370,14 @@
 				return container;
 			}
 
-			function createAdditionalParams(root, params){
-				//TODO copy from below
-			}
-
 			function setupConversionOptions(exportFormatSelect){
 				//find the selected option and use it to update
 				let selectedIndex = exportFormatSelect.selectedIndex;
 				let key = exportFormatSelect.options[selectedIndex];
 				//now update the extension list from this
 				let extSelect = createSelect(EXPORT_FORMATS[key.value]);
+				//extSelect.name = "conversion-parameters";
+				extSelect.id = "ext-select";
 				//TODO if length===1 just gray it out or maybe dont do anything
 				document.getElementById("export-ext-select").innerHTML = "";
 				document.getElementById("export-ext-select").appendChild(extSelect);
@@ -400,7 +398,9 @@
 							let inp = document.createElement("INPUT");
 							inp.type = "checkbox";
 							inp.checked = p.default === true ? "checked" : "";
-							inp.value = params[i]
+							inp.value = params[i];
+							inp.name="conversion-parameters";
+							inp.id = params[i];
 
 							let label = document.createElement("LABEL");
 							label.innerText = params[i];
@@ -419,6 +419,8 @@
 							let inp = document.createElement("INPUT");
 							inp.type = "number";
 							inp.value=p.default;
+							inp.name="conversion-parameters";
+							inp.id = params[i];
 
 							el = document.createElement("DIV");
 							el.appendChild(label);
@@ -429,6 +431,8 @@
 							label.innerText = params[i];
 
 							let inp = createSelect(p.options);
+							inp.name="conversion-parameters";
+							inp.id = params[i];
 
 							el = document.createElement("DIV");
 							el.appendChild(label);
@@ -449,36 +453,91 @@
 				}
 			}
 
+			function getExportParameters(){
+				let params = {};
+
+				let formatSelect = document.getElementById("format-select");
+				let extSelect = document.getElementById("ext-select");
+
+				params.format = (formatSelect.options[formatSelect.selectedIndex]).value;
+				params.extension = (extSelect.options[extSelect.selectedIndex]).value;
+				
+				//TODO package up the params the way the API wants it
+				let ex = {}; //object for export params: https://cloud.cadexchanger.com/dev/doc/data-conversion-api-files-convert.html
+				
+
+				let paramInputs = document.getElementsByName("conversion-parameters");
+				//now iterate through these, determine type and value then convert to a payload we can send to the api
+				for(let i=0; i < paramInputs.length; i++){
+					let input = paramInputs[i];
+					let paramName = paramInputs[i].id;
+					let paramMeta = PARAMS[params.format].export[paramName];
+
+					let value;
+					if(paramMeta.options){
+						//treat it like a select
+						value = (input.options[input.selectedIndex]).value;
+					}else if(paramMeta.type === "boolean"){
+						value = input.checked;
+					}else if(paramMeta.type === "number"){
+						value = input.value*1;//convert to number
+					}else{//string entered by user
+						value = input.value;
+					}
+					ex[paramName] = value;
+				}
+				params.params = {};
+				params.params[params.format] = {
+					"export" : ex
+				};
+			
+				return params;
+			}
+
 			document.addEventListener("DOMContentLoaded", () => {
+				let FILE;
 				const {ipcRenderer} = require("electron");
+				const fs = require("fs");
+				const AUTH = JSON.parse(fs.readFileSync("auth.json", "utf8"));
+				//TODO if AUTH doesnot exist cant be loaded pop a dialog asking user to give us the creds
+				const API = require("./auth_convert_dl.js")(AUTH);
 
 				const exportFormatSelect = createSelect(Object.keys(EXPORT_FORMATS));
+				//exportFormatSelect.name = "conversion-parameters";
+				exportFormatSelect.id = "format-select";
 				//exportFormatSelect.id="export-format";
 				exportFormatSelect.onchange = function(){
 					setupConversionOptions(exportFormatSelect);
 				};
 
-				//TODO condense the above into functions
-
-				//TODO require("the_api") and implement a conversion alg
-				//keep checking til its done
-				//when its done download
-				
-				//TODO add import options? 
-
 				document.getElementById("export-format-select").appendChild(exportFormatSelect);
 				exportFormatSelect.onchange();
 
+				//setup buttons
 				document.getElementById("back").addEventListener("click", () => {
 					location="index.html";
+				});
+
+				document.getElementById("convert-and-download").addEventListener("click", () => {
+					//get file
+					//get params
+					//build payload
+					//call api
+					//show spinny thing
+					//when conversion is ready download it
+					
+					let exParams = getExportParameters();
+					API.v1.CONVERSION.POST.FILES_ID_CONVERT(FILE.id, exParams.extension, exParams.params, (result) => {
+						//TODO if that went well we check until the file is ready then download it
+					});
 				});
 
 				//listen for ipcMains responses
 				ipcRenderer.on('retrieve', (event, id, file) => {
 					console.log(id);
 					console.log(file);
-
-					//TODO now setup the file div section
+					FILE = file;
+					createFileCard(file);
 				});
 				ipcRenderer.on('log', (event, data) => {
 					console.log(data);
@@ -494,7 +553,52 @@
 					//TODO error and return to main screen
 				}
 
+				function createFileCard(file){
+					let card = document.createElement("DIV");
+					card.classList.add("card");
+		
+					//add viewer if file is public else use placeholder image
+					if(file.public){
+						let viewer = document.createElement("IFRAME");
+						viewer.src = "https://cloud.cadexchanger.com/embedded.html?fileId="+file.id;
+						viewer.width = "100%";
+						card.appendChild(viewer);
+					}else{
+						//add a generic cube image
+						let placeholder = document.createElement("IMG");
+						placeholder.src = "cube_placeholder.png";
+						placeholder.classList.add("card-img");
+						card.appendChild(placeholder);
+					}
+
+
+					//place file name
+					let container = document.createElement("DIV");
+					container.classList.add("container");
+
+					let title = document.createElement("H4");
+					title.innerText = file.name;
+					container.appendChild(title);
+
+					let sizeLabel = document.createElement("H4");
+					sizeLabel.innerText = prettySize(file.size);
+					container.appendChild(sizeLabel);
 				
+					card.appendChild(container);
+
+
+					document.getElementById("file-section").appendChild(card);
+				}
+
+				function prettySize(bytes){
+					let index = 0;
+					let suffixes = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];					
+					while(bytes > 1000){
+						bytes = bytes/1000;
+						index++;
+					}
+					return bytes.toFixed(2)+suffixes[index];
+				}
 			});
 			console.log(location);
 		</script>
@@ -506,10 +610,14 @@
 		<div id="file-section">
 			<!--TODO put file in here-->
 		</div>
+		<div>
+			<button id="convert-and-download">Convert</button>
+		</div>
 		<div id="card-section">
 			<div>
 				Format<span id="export-format-select"></span>
 			</div>
+			
 			<div>
 				File Extension<span id="export-ext-select"></span>
 			</div>

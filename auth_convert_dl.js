@@ -1,10 +1,11 @@
 const fs = require("fs");
 const https = require("https");
 const qs = require("querystring");
+const FormData = require('form-data');
 //const FormData = require("form-data");
 
 //multipart/form-data boundary
-const BOUNDARY = "---321lAzYAnDImYoUnG123---"
+const BOUNDARY = "--------------------------d07a9b27e0c6c2eb";//"---321lAzYAnDImYoUnG123---"
 
 //load up the users client_secret/id and permissions
 //const AUTH_PAYLOAD = JSON.parse(fs.readFileSync(process.argv[2]));
@@ -345,21 +346,58 @@ module.exports = function(authObj){
 					*/
 					FILES : function(args, callback){
 						checkAuth(authObj, () => {
-							let formDataBuf;
-							let filebuf = encodeMultipartFormDataFromFile("data", args.fileName)
-							if(args.parentFolder){
-								let parentFolderBuf = encodeMultipartFormDataFromString("parentFolder", args.parentFolder);
-								formDataBuf = Buffer.concat([parentFolderBuf, fileBuf]);
-							}else{
-								//only the one param
-								formDataBuf = fileBuf;
-							}
-							
-							multipartFormDataRequest(
-								setAuth(TOKEN, FILES("POST")),
-								formDataBuf,
-								callback
-							);
+							checkInfo( (res) => {
+								/*let formDataBuf;
+								let fileBuf = encodeMultipartFormDataFromFile("data", args.fileName)
+								if(args.parentFolder){
+									let parentFolderBuf = encodeMultipartFormDataFromString("parentFolder", args.parentFolder);
+									formDataBuf = Buffer.concat([parentFolderBuf, fileBuf]);
+								}else{
+									let parentFolderBuf = encodeMultipartFormDataFromString("parentFolder", res.rootFolder);
+									formDataBuf = Buffer.concat([parentFolderBuf, fileBuf]);
+								}
+								console.log(formDataBuf.toString());
+								multipartFormDataRequest(
+									setAuth(TOKEN, FILES("POST")),
+									formDataBuf,
+									callback
+								);*/
+
+								//TODO cleanup
+								let form = FormData();
+								let parentFolder = args.parentFolder || res.rootFolder;
+								let shortFileName = args.fileName.split("/").pop();
+								form.append("parentFolder", parentFolder);
+								form.append("data", fs.readFileSync(args.fileName), shortFileName);
+
+								//let opt = setAuth(TOKEN, FILES("POST"));
+								let opt = FILES("POST");
+								opt.headers = form.getHeaders();
+								setAuth(TOKEN, opt);
+								opt.headers["Content-length"] = form.getLengthSync();
+								opt.host = "cloud.cadexchanger.com";
+								opt.protocol = "https:";
+								opt.path = "/api/v1" + opt.path;
+								
+								let req = https.request(opt, (res) => {
+									const chunks = [];
+									console.log(res.statusCode);
+									console.log(res);
+									res.on("data", function(chunk){
+										chunks.push(chunk);
+									});
+									res.on("end", function(){
+										const body = Buffer.concat(chunks);
+										//TODO turn body into something useful cause it may contain a whole file
+										//look for res headers Content-Disposition attachment; filename="FILENAME.EXT" and save that to a local file or pass along the body as a buffer wrapped by josn with the filename
+										callback(body); //maybe translate to string.. or best to leave it to the caller to decide what the data is
+									});
+								});
+								form.pipe(req);
+
+								
+								
+							});
 						});
 					},
 
@@ -761,6 +799,7 @@ function FILES(method, query){
 		//		example: name[startsWith]=con
 	}
 	if(method === "POST"){
+		opt.headers = opt.headers || {};
 		opt.headers["Content-type"] = 'multipart/form-data; charset=utf-8; boundary="'+BOUNDARY+'"';
 	}
 	return opt;

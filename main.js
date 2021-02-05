@@ -62,13 +62,15 @@ ipcMain.on('download', (event, name, data) => {
 	//dialog.showSaveDialog(...()=>{});
 	//API.v1.DATA.GET.downloadFile(arg, (res) => {
 		//open save dialog then write buffer to file chosen by save dialog...
-		let path = dialog.showSaveDialogSync({
-			title : "Save File",
-			//defaultPath : "~/home/", //TODO make sure this works across Windows/Linux/macos else leave to default behavior
-			//
-			properties : ["showOverwriteConfirmation"]
-		});
-		fs.writeFileSync(path, data);//TODO hopefully these are the correct params
+	let path = dialog.showSaveDialogSync({
+		title : "Save File",
+		defaultPath : name,
+		//
+		properties : ["showOverwriteConfirmation"]
+	});
+	if(path){//otherwise user cancelled
+		fs.writeFileSync(path, data);
+	}
 	//});
 });
 
