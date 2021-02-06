@@ -529,8 +529,29 @@
 					let exParams = getExportParameters();
 					API.v1.CONVERSION.POST.FILES_ID_CONVERT(FILE.id, exParams.extension, exParams.params, (result) => {
 						//TODO if that went well we check until the file is ready then download it
+						console.log(result);
+						let convId = result.conversion.id;
+						let dloadFileName = "download"+exParams.extension;
+						let interval = setInterval( (convId) => {
+							API.v1.CONVERSION.GET.CONVERSIONS_ID(convId, (r) => {
+								//TODO absolutely need some kind of feedback fro the user while the sever wanks out a conversion
+								if(r.conversion.status === "success"){
+									//TODO download and save file via main.js
+									clearInterval(interval);
+									API.v1.CONVERSION.GET.CONVERSIONS_ID_RESULT(convId, (dload) => {
+										console.log(dload);
+										ipcRenderer.send('download', dloadFileName, dload);
+									});
+								}else{
+									//tally up the clock
+								}
+							});
+						}, 5000, convId);
+
 					});
 				});
+				
+				
 
 				//listen for ipcMains responses
 				ipcRenderer.on('retrieve', (event, id, file) => {

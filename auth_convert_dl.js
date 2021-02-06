@@ -170,6 +170,7 @@ module.exports = function(authObj){
 		meta : {
 			getUserInfo: function(callback){
 				checkAuth(authObj, () => {
+					console.log(TOKEN);
 					checkInfo(callback);
 				});
 			}
@@ -463,7 +464,7 @@ module.exports = function(authObj){
 
 					CONVERSIONS_ID_RESULT : function(id, callback){
 						checkAuth(authObj, () => {
-							getRequest(setAuth(TOKEN, CONVERSIONS_RESULT(id)), callback)
+							getBufferRequest(setAuth(TOKEN, CONVERSIONS_RESULT(id)), callback)
 						});
 					}
 				},
@@ -513,6 +514,8 @@ module.exports = function(authObj){
 								formDataBuf,		
 								callback
 							);
+
+							//TODO need to rewrite this to use the form-data lib
 						});
 					},
 
@@ -521,6 +524,11 @@ module.exports = function(authObj){
 					//TODO switch to args. wrap options up into an object
 					FILES_ID_CONVERT : function(id, extension, parameters, callback){
 						checkAuth(authObj, () => {
+							console.log(id);
+							console.log(extension);
+							console.log(parameters);
+							extension = extension.replace(".", "");
+							console.log(getFormatFromExtension(extension));
 							bodyRequest(
 								setAuth(TOKEN, FILES_CONVERT(id)),
 								JSON.stringify({ 

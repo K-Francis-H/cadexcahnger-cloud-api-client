@@ -72,7 +72,7 @@
 					//TODO figure out context and upload file or wahtever
 					let args = {
 						fileName : data.name,
-						parentFolder : top(BACK_STACK)
+						parentFolder : top(BACK_STACK).id
 					};
 					API.v1.DATA.POST.FILES(args, (res) => {
 						console.log(res.toString());
@@ -129,8 +129,8 @@
 						if(confirm("Do you really want to delete "+fileContext.name+"?") === true){
 							console.log("confirm delete");
 							API.v1.DATA.DELETE.FILES_ID(fileContext.id, (result) => {
-								let folderId = BACK_STACK[BACK_STACK.length-1];
-								refresh(folderId);
+								let folder = BACK_STACK[BACK_STACK.length-1];
+								refresh(folder);
 							});
 						}
 					}
@@ -141,18 +141,55 @@
 				}
 
 				function updateWorkingDirectory(){
-					//TODO
+					let container = document.getElementById("working-directory");
+					let dirs = BACK_STACK.map( (item) => {
+						//TODO kind of a problem wont be able to rebase on top of earlier dirs...
+						//better just leave it to the back command
+						/*let link = document.createElement("A");
+						link.innerText = item.name;
+						link.onclick = function(){
+							
+						}*/
+
+						console.log(item);
+						console.log(item.name);
+						return item.name;
+					});
+
+					let pathArray = ["Home"].concat(dirs);
+
+					let path = ["Home"].concat(dirs).join("/");
+					console.log(path);
+					if(path === "Home"){
+						path = path+"/";
+					}
+					container.innerText = path;
 				}
 
 				function refresh(folder){
-					BACK_STACK.push(folder);
+					if(folder !== top(BACK_STACK)){
+						BACK_STACK.push(folder);
+						
+					}
+					updateWorkingDirectory();
+					
+
 					document.getElementById("card-section").innerHTML = "";
 					API.meta.getUserInfo( (user) => {
 						console.log(user);
+						console.log(folder);
+						//if(!folder){
+						//	folder = user.rootFolder
+						//}
+
+						let id;
 						if(!folder){
-							folder = user.rootFolder
-						}
-						API.v1.DATA.GET.listFolders(folder, (folders) => {
+							id = user.rootFolder;
+						}else{
+							id = folder.id;
+						}						
+
+						API.v1.DATA.GET.listFolders(id, (folders) => {
 							//list folders
 							console.log(folders);
 							for(let i=0; i < folders.folders.length; i++){
@@ -160,7 +197,7 @@
 							}
 						});
 						//TODO this way of passing seems crufty are there even other params?
-						API.v1.DATA.GET.FILES({parentFolder: folder}, (files) => {
+						API.v1.DATA.GET.FILES({parentFolder: id}, (files) => {
 							console.log(files);
 							for(let i=0; i < files.files.length; i++){
 								//list the files as cards in the curent window
@@ -170,8 +207,6 @@
 					});
 					
 				}
-			
-
 
 				function createFileCard(file){
 					let card = document.createElement("DIV");
@@ -259,8 +294,7 @@
 					//TODO onclicks
 					card.onclick = function(){
 						//navigate inside
-						WORKING_DIR.push(folder.name);
-						refresh(folder.id);
+						refresh(folder);
 					}
 
 					document.getElementById("card-section").appendChild(card);
@@ -282,11 +316,6 @@
 				}
 
 				document.onclick = hideMenu; 
-
-				//DEBUG
-				document.getElementById("view-convert-page").addEventListener("click", () => {
-					location = "convert-remote.html";
-				});
 			});
 		</script>
 	</head>
@@ -303,7 +332,7 @@
 		</div>
 		<button id="back">Back</button> 
 		<button id="upload">Upload</button>
-		<button id="view-convert-page">View Convert Page</button>
+		<div id="working-directory"></div>
 		<div id="card-section"></div>
 	</body>
 </html>
