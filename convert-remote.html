@@ -242,7 +242,7 @@
 						"generateMtl" : {
 							"type" : "boolean",
 							"default" : true,
-							"tooltip" : "Specifies whether material library should be generated or not. The material library contains materials used in the model. If the material library is not created then no colors or materials will be stored."
+							"tooltip" : "Specifies whether material library should be generated or not. The material library contains materials used in the model. If the material library is not created then no colors or materials will be stored. If this option is selected the resulting download will be a ZIP file containing an OBJ and MTL file when extracted."
 						},
 						"replaceSpaces" : {
 							"type" : "boolean",
@@ -409,13 +409,10 @@
 							el.appendChild(inp);
 							el.appendChild(label);
 						}
-						//else if(p.type === "string" && !p.options){
-						//	el = document.createElement(
-						//}
 						else if(p.type === "number" && !p.options){
 							let label = document.createElement("LABEL");
 							label.innerText = params[i];
-							//TODO add an element that is of type input number
+
 							let inp = document.createElement("INPUT");
 							inp.type = "number";
 							inp.value=p.default;
@@ -532,10 +529,19 @@
 						console.log(result);
 						let convId = result.conversion.id;
 						let dloadFileName = "download"+exParams.extension;
+
+						//if this is an OBJ file and the user selected to have an MTL generated, the resulting
+						//download will be a ZIP file
+						if(exParams.params && exParams.params.OBJ && exParams.params.OBJ.export.generateMtl){
+							dloadFileName += ".zip";
+						}
+						console.log(exParams);
+						console.log(dloadFileName);
+/*
 						let interval = setInterval( (convId) => {
 							API.v1.CONVERSION.GET.CONVERSIONS_ID(convId, (r) => {
-								//TODO absolutely need some kind of feedback fro the user while the sever wanks out a conversion
-								if(r.conversion.status === "success"){
+								//TODO absolutely need some kind of feedback for the user while the sever wanks out a conversion
+								if(r.conversion.status === "success"){//might also be "ready"... could be an infinite loop problem if this changes in the future
 									//TODO download and save file via main.js
 									clearInterval(interval);
 									API.v1.CONVERSION.GET.CONVERSIONS_ID_RESULT(convId, (dload) => {
@@ -543,11 +549,11 @@
 										ipcRenderer.send('download', dloadFileName, dload);
 									});
 								}else{
-									//tally up the clock
+									//tally up the clock or something, can also just not give a fuck
 								}
 							});
 						}, 5000, convId);
-
+*/
 					});
 				});
 				
@@ -622,14 +628,18 @@
 				}
 			});
 			console.log(location);
+
+			//NOTE OBJ conversion does not work
+			//STL works
+			//STEP works?
+			//x3d works
 		</script>
 	</head>
 	<body>
-		<!--TODO determine way to send context to onclick for each event below-->
 		<button id="back">Back</button> 
 		</br></br></br></br></br></br></br></br></br></br></br></br></br></br></br></br>
 		<div id="file-section">
-			<!--TODO put file in here-->
+			<!--put file in here-->
 		</div>
 		<div>
 			<button id="convert-and-download">Convert</button>

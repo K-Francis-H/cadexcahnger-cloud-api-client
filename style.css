@@ -22,6 +22,8 @@
   width: 100%;
 }
 
+.card-associated{}
+
 .context-menu { 
 	position: absolute; 
 	text-align: center; 
@@ -93,3 +95,5 @@
   visibility: visible;
   opacity: 1;
 }
+
+/*TODO settings for the inputs on the conversion page*/

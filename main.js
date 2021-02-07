@@ -13,7 +13,7 @@ const API = require("./auth_convert_dl.js")(AUTH);
 
 const CACHE = {};//persistent cache object for storing data between html files
 
-let win
+let win;
 
 function createWindow() {
 	win = new BrowserWindow({

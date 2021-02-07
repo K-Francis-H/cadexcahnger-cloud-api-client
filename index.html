@@ -6,37 +6,13 @@
 		<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" />
 		<link rel="stylesheet" href="style.css">
 		<script>
-			var fileContext;
+			var fileContext; //used to set which file card was selected when performing convert/download/delete actions
 			document.addEventListener("DOMContentLoaded", () => {
 				const {ipcRenderer} = require("electron");
 				const fs = require("fs");
 				const AUTH = JSON.parse(fs.readFileSync("auth.json", "utf8"));
 				//TODO if AUTH doesnot exist cant be loaded pop a dialog asking user to give us the creds
 				const API = require("./auth_convert_dl.js")(AUTH);
-				console.log(AUTH);
-				console.log(API);
-
-				//now load up user and files
-				/*API.v1.ACCOUNT.GET.USERS_ME( (user) => {
-					console.log(user);
-					API.v1.DATA.GET.FILES(
-				});*/
-				/*API.meta.getUserInfo( (user) => {
-					API.v1.DATA.GET.listFolders(user.user.rootFolder, (folders) => {
-						//todo list folders
-						console.log(folders);
-						for(let i=0; i < folders.folders.length; i++){
-							createFolderCard(folders.folders[i]);
-						}
-					});
-				});
-				API.v1.DATA.GET.FILES(null, (files) => {
-					console.log(files);
-					for(let i=0; i < files.files.length; i++){
-						//TODO list the files as cards in the curent window
-						createFileCard(files.files[i]);
-					}
-				});*/
 
 				const BACK_STACK = [];
 				const WORKING_DIR = ["Home"];
@@ -233,13 +209,17 @@
 
 					let title = document.createElement("H4");
 					title.innerText = file.name;
+					title.classList.add("card-associated");
 					container.appendChild(title);
 
 					let sizeLabel = document.createElement("H4");
 					sizeLabel.innerText = prettySize(file.size);
+					sizeLabel.classList.add("card-associated");
 					container.appendChild(sizeLabel);
 				
 					card.appendChild(container);
+					card.id = file.id;
+					let id = file.id;
 
 					//TODO attach onclicks/contextmenus for the file
 					//add delete capability
@@ -247,10 +227,7 @@
 					//add convert
 				
 					card.onclick = function(event){
-						//window.alert(file.id);
-						//goto new page with more info
-						//we do this by passing the file object to the main.js script
-						//then retrieving it on the new page
+						card.oncontextmenu(event);
 					};
 					//TODO switch to a ... options bar, or just have the onclick change the page to file only with options
 					card.oncontextmenu = function(event){
@@ -291,7 +268,6 @@
 
 					card.appendChild(container);
 
-					//TODO onclicks
 					card.onclick = function(){
 						//navigate inside
 						refresh(folder);
@@ -310,9 +286,26 @@
 					return bytes.toFixed(2)+suffixes[index];
 				}
 
-				function hideMenu() { 
-					document.getElementById("contextMenu").style.display = "none";
-					fileContext = null;
+				function hideMenu(event) {
+					if(!event){
+						document.getElementById("contextMenu").style.display = "none";
+						fileContext = null;
+						return;
+					}
+					console.log(event);
+					console.log(event.target);
+					let className = event.target.className;
+					switch(className){
+						case "container":
+						case "card-img":
+						case "card":
+						case "card-associated":
+							return;
+						default:
+							document.getElementById("contextMenu").style.display = "none";
+							fileContext = null;
+					} 
+					
 				}
 
 				document.onclick = hideMenu; 
@@ -320,7 +313,6 @@
 		</script>
 	</head>
 	<body>
-		<!--TODO determine way to send context to onclick for each event below-->
 		<div id="contextMenu" class="context-menu" 
 			style="display:none"> 
 			<ul> 
