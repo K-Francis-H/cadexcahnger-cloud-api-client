@@ -10,9 +10,14 @@
 			document.addEventListener("DOMContentLoaded", () => {
 				const {ipcRenderer} = require("electron");
 				const fs = require("fs");
-				const AUTH = JSON.parse(fs.readFileSync("auth.json", "utf8"));
-				//TODO if AUTH doesnot exist cant be loaded pop a dialog asking user to give us the creds
-				const API = require("./auth_convert_dl.js")(AUTH);
+				try{
+					var AUTH = JSON.parse(fs.readFileSync("auth.json", "utf8"));
+					//TODO if AUTH doesnot exist cant be loaded pop a dialog asking user to give us the creds
+					var API = require("./auth_convert_dl.js")(AUTH);
+				}catch(e){
+					//open dialog to load the auth object
+					document.getElementById("auth").onclick();
+				}
 
 				const BACK_STACK = [];
 				const WORKING_DIR = ["Home"];
@@ -41,6 +46,19 @@
 				document.getElementById("back").addEventListener("click", () => {
 					BACK_STACK.pop(); //remove current folder
 					refresh(BACK_STACK.pop());
+				});
+
+				document.getElementById("auth", () => {
+					//TODO open file select dialog
+					//look for JSON attempt to load auth
+					//store file in config somewhere
+					ipcRenderer.send("auth");
+				});
+
+				ipcRenderer.on("newAuth", (event, auth) => {
+					//TODO maybe wrap this in try catch in case user picked an incompatible file
+					AUTH = auth;
+					API = require("./auth_convert_dl.js")(AUTH);
 				});
 
 				ipcRenderer.on('fileUploadData', (event, data) => {
@@ -270,6 +288,7 @@
 
 					card.onclick = function(){
 						//navigate inside
+						hideMenu();
 						refresh(folder);
 					}
 
@@ -292,9 +311,9 @@
 						fileContext = null;
 						return;
 					}
-					console.log(event);
-					console.log(event.target);
+
 					let className = event.target.className;
+					//only hid if user selected a non card
 					switch(className){
 						case "container":
 						case "card-img":
@@ -322,8 +341,9 @@
 				<li id="context-delete"><a href="#">Delete</a></li> 
 			</ul> 
 		</div>
-		<button id="back">Back</button> 
-		<button id="upload">Upload</button>
+		<button id="back" class="button">Back</button> 
+		<button id="upload" class="button">Upload</button>
+		<button id="auth" class="button">Set Auth</button>
 		<div id="working-directory"></div>
 		<div id="card-section"></div>
 	</body>

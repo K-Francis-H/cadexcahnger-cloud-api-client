@@ -7,9 +7,13 @@ const url = require('url');
 const path = require('path');
 const fs = require('fs');
 
-const AUTH = JSON.parse(fs.readFileSync("auth.json", "utf8"));
+try{
+	var AUTH = JSON.parse(fs.readFileSync("auth.json", "utf8"));
+}catch(e){
+	//TODO need to load it from somewhere and save to a config directory
+}
 //TODO if AUTH doesnot exist cant be loaded pop a dialog asking user to give us the creds
-const API = require("./auth_convert_dl.js")(AUTH);
+var API = require("./auth_convert_dl.js")(AUTH);
 
 const CACHE = {};//persistent cache object for storing data between html files
 
@@ -18,7 +22,8 @@ let win;
 function createWindow() {
 	win = new BrowserWindow({
 		width: 800, 
-		height: 600, 
+		height: 600,
+		icon: "cube_placeholder.png", //only works on Win/Linux for macos see: https://stackoverflow.com/questions/31529772/how-to-set-app-icon-for-electron-atom-shell-app  
 		webPreferences : { 
 			nodeIntegration: true
 		}
@@ -72,6 +77,26 @@ ipcMain.on('download', (event, name, data) => {
 		fs.writeFileSync(path, data);
 	}
 	//});
+});
+
+ipcMain.on('auth', (event) => {
+	let path = dialog.showOpenDialogSync({
+		title : "Open Auth JSON File",
+		filters : [".json"],
+		properties : [
+			"openFIle"
+		]
+	});
+	if(path){
+		try{
+			//overwrite the api to new auth
+			AUTH = JSON.parse(fs.readFileSync(path, "utf8"));
+			API = require("./auth_convert_dl.js")(AUTH);
+			event.sender.send('newAuth', AUTH);
+		}catch(e){
+			//TODO alert
+		}
+	}
 });
 
 //for these calls arg = [key, value]
