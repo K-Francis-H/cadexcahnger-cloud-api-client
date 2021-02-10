@@ -6,41 +6,90 @@
 		<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" />
 		<link rel="stylesheet" href="style.css">
 		<script>
+			function showAuthDialog(callback){
+				//show shadowbox
+				//with msg plaese enter copy and paste the client_id and client_secret from your opencadexchanger account into the box below
+				//if you already have a auth.json file saved elsewhere on your computer you can load it instead
+				document.getElementById("popup-background").style.display="block";
+				document.getElementById("submit-auth").onclick = function(){
+					let clientId = document.getElementById("client-id-input").value;
+					let clientSecret = document.getElementById("client-secret-input").value;
+					//TODO eval id/secret to make sure its valid
+					console.log(clientId+" "+clientSecret);
+					document.getElementById("popup-background").style.display="none";
+					callback(false, clientId, clientSecret);
+				};
+				document.getElementById("load-auth").onclick = function(){
+					console.log("loading auth from file");
+					document.getElementById("popup-background").style.display="none";
+					callback(true);
+				};
+				document.getElementById("popup-close-button").onclick = function(){
+					document.getElementById("popup-background").style.display="none";
+				};
+			}
+
 			var fileContext; //used to set which file card was selected when performing convert/download/delete actions
 			document.addEventListener("DOMContentLoaded", () => {
-				const {ipcRenderer} = require("electron");
-				const fs = require("fs");
-				try{
-					var AUTH = JSON.parse(fs.readFileSync("auth.json", "utf8"));
-					//TODO if AUTH doesnot exist cant be loaded pop a dialog asking user to give us the creds
-					var API = require("./auth_convert_dl.js")(AUTH);
-				}catch(e){
-					//open dialog to load the auth object
-					document.getElementById("auth").onclick();
-				}
-
 				const BACK_STACK = [];
 				const WORKING_DIR = ["Home"];
-				refresh();
+
+				var AUTH;
+				var API;
+				const {ipcRenderer} = require("electron");
+				ipcRenderer.on("newAuth", (event, auth) => {
+					//TODO maybe wrap this in try catch in case user picked an incompatible file
+					console.log(auth);
+					AUTH = auth;
+					fs.writeFileSync("auth.json", JSON.stringify(AUTH), "utf8");
+					API = require("./auth_convert_dl.js")(AUTH);
+					refresh();
+				});
+				ipcRenderer.on('log', (event, data) => {
+					console.log(data);
+				});
+
+				document.getElementById("auth", () => {
+					//TODO open file select dialog
+					//look for JSON attempt to load auth
+					//store file in config somewhere
+					console.log("called auth");
+					ipcRenderer.send("auth");
+				});
+
+				const fs = require("fs");
+				try{
+					AUTH = JSON.parse(fs.readFileSync("auth.json", "utf8"));
+					//TODO if AUTH doesnot exist cant be loaded pop a dialog asking user to give us the creds
+					API = require("./auth_convert_dl.js")(AUTH);
+					refresh();
+				}catch(e){
+					console.log(e);
+					//TODO open dialog asking user to paste in API secrets or open an existing auth file
+					//open dialog to load the auth object
+					showAuthDialog( (loadFromFile, clientId, clientSecret)=>{
+						if(loadFromFile){
+							ipcRenderer.send("auth");
+						}else{
+							AUTH = {
+								"client_id":clientId,
+								"client_secret":clientSecret,
+								"grant_type":"client_credentials",
+								"scope":"user:read data:read data:create data:write data:convert viewer:read"
+							};
+							console.log(JSON.stringify(AUTH));
+							fs.writeFileSync("auth.json", JSON.stringify(AUTH), "utf8");
+							API = require("./auth_convert_dl.js")(AUTH);
+							refresh();
+						}
+					});
+				}
+
+				
+				
 
 				document.getElementById("upload").addEventListener("click", () => {
-					ipcRenderer.send('uploadFile');//TODO use second param to identify context and recieve it back!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! so we know which API call to use
-					/*dialog.showOpenDialog({properties: ['openFile']})
-						.then( result => {
-							console.log(result);
-							if(result.filePaths[0]){//at least one file selected, ignore others
-								let file = {
-									name: result.filePaths[0],
-									data: fs.readFileSync(result.filePaths[0]) //Buffer
-								}
-								console.log(file);
-								//event.sender.send("fileUploadData", file);
-							}else{
-								console.log("no file selected");
-							}
-						});
-					*/
-					
+					ipcRenderer.send('uploadFile');
 				});
 
 				document.getElementById("back").addEventListener("click", () => {
@@ -48,18 +97,15 @@
 					refresh(BACK_STACK.pop());
 				});
 
-				document.getElementById("auth", () => {
+				document.getElementById("auth").addEventListener("click", () => {
 					//TODO open file select dialog
 					//look for JSON attempt to load auth
 					//store file in config somewhere
+					console.log("called auth");
 					ipcRenderer.send("auth");
 				});
 
-				ipcRenderer.on("newAuth", (event, auth) => {
-					//TODO maybe wrap this in try catch in case user picked an incompatible file
-					AUTH = auth;
-					API = require("./auth_convert_dl.js")(AUTH);
-				});
+				
 
 				ipcRenderer.on('fileUploadData', (event, data) => {
 					console.log(data);
@@ -73,10 +119,6 @@
 						console.log(res);
 						refresh(top(BACK_STACK));
 					});
-				});
-
-				ipcRenderer.on('log', (event, data) => {
-					console.log(data);
 				});
 
 				document.getElementById("context-download").addEventListener("click", (e) => {
@@ -327,11 +369,36 @@
 					
 				}
 
-				document.onclick = hideMenu; 
+				document.onclick = hideMenu;
+				
 			});
 		</script>
 	</head>
 	<body>
+		<div id="popup-background" class="popup-background">
+			<span class="helper"></span>
+			<div>
+				<!--
+				//show shadowbox
+				//with msg plaese enter copy and paste the client_id and client_secret from your opencadexchanger account into the box below
+				//if you already have a auth.json file saved elsewhere on your computer you can load it instead
+				-->
+				<div id="popup-close-button" class="popup-close-button">&times;</div>
+				<p>Please copy and paste your <code class="inline-code">client_id</code> and <code class="inline-code">client_secret</code> found at the <a href="https://cloud.cadexchanger.com/dev/apps/my">CAD Exchanger Developer Portal</a>. If you have not yet created an app so that you have API access, please see the instructions at the <a href="https://docs.cadexchanger.com/cloud-api/authentication-client-creation.html#authentication-obtain-properties">CAD Exchanger API Documentation</a>. You may also load a <code class="inline-code">JSON</code> file with your credentials if they match the format below:
+				</p>
+				<code>
+					{</br>
+						&nbsp;&nbsp;&nbsp;&nbsp;"client_id":"<input id="client-id-input" type="text"/>",</br>
+						&nbsp;&nbsp;&nbsp;&nbsp;"client_secret":"<input id="client-secret-input" type="text"/>",</br>
+						&nbsp;&nbsp;&nbsp;&nbsp;"grant_type":"client_credentials",</br>
+						&nbsp;&nbsp;&nbsp;&nbsp;"scope":"user:read data:read data:create data:write data:convert viewer:read"</br>
+					}</br>
+				</code>
+				</br>
+				<button id="submit-auth" class="button">Submit</button>
+				<button id="load-auth" class="button">Load Auth File</button>
+			</div>
+		</div>
 		<div id="contextMenu" class="context-menu" 
 			style="display:none"> 
 			<ul> 

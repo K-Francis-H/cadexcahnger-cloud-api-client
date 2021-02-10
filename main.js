@@ -7,14 +7,6 @@ const url = require('url');
 const path = require('path');
 const fs = require('fs');
 
-try{
-	var AUTH = JSON.parse(fs.readFileSync("auth.json", "utf8"));
-}catch(e){
-	//TODO need to load it from somewhere and save to a config directory
-}
-//TODO if AUTH doesnot exist cant be loaded pop a dialog asking user to give us the creds
-var API = require("./auth_convert_dl.js")(AUTH);
-
 const CACHE = {};//persistent cache object for storing data between html files
 
 let win;
@@ -80,21 +72,25 @@ ipcMain.on('download', (event, name, data) => {
 });
 
 ipcMain.on('auth', (event) => {
+	dlog("AUTH CALLED")
 	let path = dialog.showOpenDialogSync({
 		title : "Open Auth JSON File",
 		filters : [".json"],
 		properties : [
-			"openFIle"
+			"openFile"
 		]
 	});
+	dlog("path: "+path);
+	dlog(path);
 	if(path){
+		
 		try{
 			//overwrite the api to new auth
-			AUTH = JSON.parse(fs.readFileSync(path, "utf8"));
-			API = require("./auth_convert_dl.js")(AUTH);
+			let AUTH = JSON.parse(fs.readFileSync(path[0], "utf8"));
 			event.sender.send('newAuth', AUTH);
 		}catch(e){
 			//TODO alert
+			dlog(e);
 		}
 	}
 });
