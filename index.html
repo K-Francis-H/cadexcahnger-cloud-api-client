@@ -102,7 +102,23 @@
 					//look for JSON attempt to load auth
 					//store file in config somewhere
 					console.log("called auth");
-					ipcRenderer.send("auth");
+					//ipcRenderer.send("auth");
+					showAuthDialog( (loadFromFile, clientId, clientSecret) => {
+						if(loadFromFile){
+							ipcRenderer.send("auth");
+						}else{
+							AUTH = {
+								"client_id":clientId,
+								"client_secret":clientSecret,
+								"grant_type":"client_credentials",
+								"scope":"user:read data:read data:create data:write data:convert viewer:read"
+							};
+							console.log(JSON.stringify(AUTH));
+							fs.writeFileSync("auth.json", JSON.stringify(AUTH), "utf8");
+							API = require("./auth_convert_dl.js")(AUTH);
+							refresh();
+						}
+					});
 				});
 
 				
@@ -396,7 +412,7 @@
 				</code>
 				</br>
 				<button id="submit-auth" class="button">Submit</button>
-				<button id="load-auth" class="button">Load Auth File</button>
+				<button id="load-auth" class="button">Load File</button>
 			</div>
 		</div>
 		<div id="contextMenu" class="context-menu" 
