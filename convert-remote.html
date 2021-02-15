@@ -343,6 +343,116 @@
 				}
 			};
 
+			function createLoadingAnimation(size, bgColor, color){
+				let canvas = document.createElement("canvas");
+				canvas.width = size;
+				canvas.height = size;
+				const SIZE = canvas.width;
+				const CENTER = SIZE/2;
+				
+				let ctx = canvas.getContext("2d");
+				let ang = 0;//degrees
+
+				let loop = function(){
+					//clear canvas
+					ctx.fillStyle = bgColor;
+					ctx.fillRect(0,0,SIZE,SIZE);
+
+					//polar coords to move around circle of radius SIZE*1.5 for outer gradient
+					let rad = (Math.PI*ang)/180;
+					let circleX = SIZE*1.5*Math.cos(rad);
+					let circleY = SIZE*1.5*Math.sin(rad);
+					ang = (ang+5) % 360;
+
+					let gradient = ctx.createLinearGradient(CENTER, CENTER, circleX, circleY);
+ 					gradient.addColorStop(0, bgColor);
+					gradient.addColorStop(0.5, color);
+
+					ctx.fillStyle = gradient;
+					ctx.strokeStyle = "black";
+					//outer circle with moving gradient
+					ctx.beginPath();
+					ctx.arc(CENTER, CENTER, CENTER, 0, 2*Math.PI);
+					ctx.stroke();
+					ctx.fill();
+					//inner circle filled with bgColor -> creates a loop appearance
+					ctx.fillStyle = bgColor;
+					ctx.beginPath();
+					ctx.arc(CENTER, CENTER, CENTER*0.75, 0, 2*Math.PI);
+					ctx.fill();
+					ctx.stroke(); 
+				};
+
+				return {
+					element : canvas,
+					animate : function(fps){
+						fps = fps || 30;
+						let wait = 1000/fps;
+						let interval = setInterval(loop, wait);
+						return interval;
+					}
+				};
+			}
+
+			function createAnimationCanvas(canvasId, bgColor, color){
+				let canvas = document.getElementById(canvasId);
+				//canvas.width = size;
+				//canvas.height = size;
+				const SIZE = canvas.width;
+				const CENTER = SIZE/2;
+				
+				let ctx = canvas.getContext("2d");
+				let ang = 0;//degrees
+
+				let loop = function(){
+					//clear canvas
+					ctx.fillStyle = bgColor;
+					ctx.fillRect(0,0,SIZE,SIZE);
+
+					//polar coords to move around circle of radius SIZE*1.5 for outer gradient
+					let rad = (Math.PI*ang)/180;
+					let circleX = SIZE*1.5*Math.cos(rad);
+					let circleY = SIZE*1.5*Math.sin(rad);
+					ang = (ang+5) % 360;
+
+					let gradient = ctx.createLinearGradient(CENTER, CENTER, circleX, circleY);
+ 					gradient.addColorStop(0, bgColor);
+					gradient.addColorStop(0.5, color);
+
+					ctx.fillStyle = gradient;
+					ctx.strokeStyle = "black";
+					//outer circle with moving gradient
+					ctx.beginPath();
+					ctx.arc(CENTER, CENTER, CENTER, 0, 2*Math.PI);
+					ctx.stroke();
+					ctx.fill();
+					//inner circle filled with bgColor -> creates a loop appearance
+					ctx.fillStyle = bgColor;
+					ctx.beginPath();
+					ctx.arc(CENTER, CENTER, CENTER*0.75, 0, 2*Math.PI);
+					ctx.fill();
+					ctx.stroke(); 
+				};
+
+				return {
+					element : canvas,
+					animate : function(fps){
+						fps = fps || 30;
+						let wait = 1000/fps;
+						let interval = setInterval(loop, wait);
+						return interval;
+					}
+				};
+			}
+
+			function showLoadingShadowBox(){
+				document.getElementById("popup-background").style.display="block";
+				let anim = createAnimationCanvas("canvas", "white", "lightblue");
+				let interval = anim.animate(30);
+				anim.interval = interval;
+				return anim;
+			}
+
 			function createSelect(list){
 				let select = document.createElement("SELECT");
 
@@ -403,7 +513,7 @@
 							inp.id = params[i];
 
 							let label = document.createElement("LABEL");
-							label.innerText = params[i];
+							label.innerText = params[i]+"nbsp;";
 
 							el = document.createElement("DIV");
 							el.appendChild(inp);
@@ -522,9 +632,15 @@
 					//call api
 					//show spinny thing
 					//when conversion is ready download it
+					document.getElementById("popup-background").style.display="block";
 					
 					let exParams = getExportParameters();
 					API.v1.CONVERSION.POST.FILES_ID_CONVERT(FILE.id, exParams.extension, exParams.params, (result) => {
+						//TODO if result.error leave and and alert user to the error
+						if(result.errors){
+							//TODO
+						}
+
 						//TODO if that went well we check until the file is ready then download it
 						console.log(result);
 						let convId = result.conversion.id;
@@ -537,13 +653,18 @@
 						}
 						console.log(exParams);
 						console.log(dloadFileName);
-/*
+						document.getElementById("popup-background").style.display="visible";
+						
+
 						let interval = setInterval( (convId) => {
+							//let anim = showLoadingShadowBox();
 							API.v1.CONVERSION.GET.CONVERSIONS_ID(convId, (r) => {
 								//TODO absolutely need some kind of feedback for the user while the sever wanks out a conversion
 								if(r.conversion.status === "success"){//might also be "ready"... could be an infinite loop problem if this changes in the future
 									//TODO download and save file via main.js
 									clearInterval(interval);
+									//clearInterval(anim.interval);
+									document.getElementById("popup-background").style.display="none";
 									API.v1.CONVERSION.GET.CONVERSIONS_ID_RESULT(convId, (dload) => {
 										console.log(dload);
 										ipcRenderer.send('download', dloadFileName, dload);
@@ -553,8 +674,9 @@
 								}
 							});
 						}, 5000, convId);
-*/
+
 					});
+
 				});
 				
 				
@@ -636,23 +758,35 @@
 		</script>
 	</head>
 	<body>
+		<div id="popup-background" class="popup-background">
+			<span class="helper"></span>
+			<div class="loading">
+				<!--
+				//show shadowbox
+				//with msg plaese enter copy and paste the client_id and client_secret from your opencadexchanger account into the box below
+				//if you already have a auth.json file saved elsewhere on your computer you can load it instead
+				-->
+				<!--<canvas id="canvas" width="85%" height="85%"></canvas>-->
+				<img src="loading.gif" width="64" height="64"/>
+			</div>
+		</div>
 		<button id="back" class="button">Back</button> 
 		</br></br></br></br></br></br>
 		<div id="file-section">
 			<!--put file in here-->
 		</div>
-		<div>
-			<button id="convert-and-download" class="button">Convert</button>
-		</div>
 		<div id="card-section">
 			<div>
-				Format<span id="export-format-select"></span>
+				Format&nbsp;<span id="export-format-select"></span>
 			</div>
 			
 			<div>
-				File Extension<span id="export-ext-select"></span>
+				File Extension&nbsp;<span id="export-ext-select"></span>
 			</div>
 			<div id="additional-params"></div>
+		</div>
+		<div>
+			<button id="convert-and-download" class="button">Convert</button>
 		</div>
 	</body>
 </html>
