@@ -607,7 +607,7 @@
 				const fs = require("fs");
 				const AUTH = JSON.parse(fs.readFileSync("auth.json", "utf8"));
 				//TODO if AUTH doesnot exist cant be loaded pop a dialog asking user to give us the creds
-				const API = require("./auth_convert_dl.js")(AUTH);
+				const API = require("./cadexchanger-api.js")(AUTH);
 
 				const exportFormatSelect = createSelect(Object.keys(EXPORT_FORMATS));
 				//exportFormatSelect.name = "conversion-parameters";
@@ -715,7 +715,7 @@
 					}else{
 						//add a generic cube image
 						let placeholder = document.createElement("IMG");
-						placeholder.src = "cube_placeholder.png";
+						placeholder.src = "assets/cube_placeholder.png";
 						placeholder.classList.add("card-img");
 						card.appendChild(placeholder);
 					}
@@ -767,7 +767,7 @@
 				//if you already have a auth.json file saved elsewhere on your computer you can load it instead
 				-->
 				<!--<canvas id="canvas" width="85%" height="85%"></canvas>-->
-				<img src="loading.gif" width="64" height="64"/>
+				<img src="assets/loading.gif" width="64" height="64"/>
 			</div>
 		</div>
 		<button id="back" class="button">Back</button> 

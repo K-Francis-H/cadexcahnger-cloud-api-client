@@ -128,7 +128,7 @@
     height:100%;
     vertical-align:middle;
 }
-/*
+
 .popup-background > div {
     background-color: #fff;
     box-shadow: 10px 10px 60px #555;
@@ -143,7 +143,7 @@
     padding: 15px 5%;
     text-align:left;
 }
-*/
+
 
 .popup-background .loading {
     background-color: #fff;

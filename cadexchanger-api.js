@@ -394,6 +394,7 @@ module.exports = function(authObj){
 										callback(body); //maybe translate to string.. or best to leave it to the caller to decide what the data is
 									});
 								});
+								//submit form
 								form.pipe(req);
 
 								
@@ -404,6 +405,7 @@ module.exports = function(authObj){
 
 					FILE_REVISIONS : function(id, fileName, callback){
 						checkAuth(authObj, () => {
+							//TODO convert to use FormData
 							multipartFormDataRequest(
 								setAuth(TOKEN, FILE_REVISIONS("POST", "")),
 								Buffer.concat([
@@ -420,10 +422,12 @@ module.exports = function(authObj){
 						checkAuth(authObj, () => {
 							bodyRequest(
 								setAuth(TOKEN, FOLDERS("POST")),
-								{
-									"parentFolder" : parentFolder,
-									"name" : name
-								},
+								JSON.stringify({
+									"folder" : {
+										"parentFolder" : parentFolder,
+										"name" : name
+									}
+								}),
 								callback
 							);
 						});
@@ -562,18 +566,17 @@ module.exports = function(authObj){
 			}
 		}
 	}
-}//TODO----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-function conversionParametersBuilder(format, opt){
-
-}
+}//----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 function getFormatFromExtension(extension){
+	if(extension.match(/asm\..*|prt\..*/)){
+		return "Creo";
+	}
 	switch(extension.toLowerCase()){
 		case "sldasm":
 		case "sldpart":
 			return "SolidWorks";
-		//TODO need to use regex to mathc multi extensions files
+		//see above check
 		//case "asm.*":
 		//case "prt.*":
 			//return "Creo"
@@ -655,7 +658,8 @@ function canImport(fileName){
 		//case "asm.*":
 		//case "prt.*":
 			//return "Creo"
-		case "prt":
+		case "asm":
+		case "prt": //used by both Creo and NX
 		case "igs":
 		case "iges":
 		case "stp":
@@ -733,7 +737,8 @@ function canExport(fileName){
 		//case "asm.*":
 		//case "prt.*":
 			//return "Creo"
-		case "prt":
+		case "asm":
+		case "prt":	//used by both Creo and NX
 		case "sab":
 		case "xmt_txt":
 		case "xmt_bin":

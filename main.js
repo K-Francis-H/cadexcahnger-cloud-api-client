@@ -95,6 +95,7 @@ ipcMain.on('auth', (event) => {
 	}
 });
 
+//simple persistence between ui screens over ipc
 //for these calls arg = [key, value]
 ipcMain.on('store', (event, key, value) => {
 	CACHE[key] = value;

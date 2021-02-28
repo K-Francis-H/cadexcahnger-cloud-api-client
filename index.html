@@ -29,6 +29,23 @@
 				};
 			}
 
+			function showNewFolderDialog(callback){//-> callback(isCanceled, name) 
+				document.getElementById("popup-background-new-folder").style.display="block";
+				document.getElementById("submit-new-folder").onclick = function(){
+					let name = document.getElementById("new-folder-name").value;
+					if(name){
+						document.getElementById("popup-background-new-folder").style.display="none";
+						document.getElementById("new-folder-name").value="";
+						callback(false, name);
+					}
+				};
+				document.getElementById("cancel-new-folder").onclick = function(){
+					document.getElementById("popup-background-new-folder").style.display="none";
+					document.getElementById("new-folder-name").value="";
+					callback(true);
+				};
+			}
+
 			var fileContext; //used to set which file card was selected when performing convert/download/delete actions
 			document.addEventListener("DOMContentLoaded", () => {
 				const BACK_STACK = [];
@@ -61,7 +78,7 @@
 				try{
 					AUTH = JSON.parse(fs.readFileSync("auth.json", "utf8"));
 					//TODO if AUTH doesnot exist cant be loaded pop a dialog asking user to give us the creds
-					API = require("./auth_convert_dl.js")(AUTH);
+					API = require("./cadexchanger-api.js")(AUTH);
 					refresh();
 				}catch(e){
 					console.log(e);
@@ -86,7 +103,35 @@
 				}
 
 				
-				
+				document.getElementById("create-folder").addEventListener("click", () => {
+					//TODO call api to create new folder under current directory	
+					showNewFolderDialog( (isCanceled, name) => {
+						if(isCanceled){
+							return;
+						}
+
+						console.log(name);
+						API.meta.getUserInfo( (user) => {
+							let folder = top(BACK_STACK);
+							if(!folder){
+								folder = user.rootFolder;
+							}else{
+								folder = folder.id;
+							}
+							console.log(folder);
+
+							API.v1.DATA.POST.FOLDERS(folder, name, (result) => {
+								console.log(result);
+								refresh(folder);
+							});
+						});
+						//API.v1.DATA.POST.FOLDERS(
+					});
+					//let name = prompt("Enter a name for the new folder");
+					//console.log(getParentFolder());
+					//console.llg(name);	
+					//
+				});
 
 				document.getElementById("upload").addEventListener("click", () => {
 					ipcRenderer.send('uploadFile');
@@ -121,7 +166,13 @@
 					});
 				});
 
-				
+				/*function getParentFolder(){
+					if(!top(BACK_STACK)){
+						return user.rootFolder;
+					}else{
+						return top(BACK_STACK).id;
+					}
+				}*/
 
 				ipcRenderer.on('fileUploadData', (event, data) => {
 					console.log(data);
@@ -273,7 +324,7 @@
 					}else{
 						//add a generic cube image
 						let placeholder = document.createElement("IMG");
-						placeholder.src = "cube_placeholder.png";
+						placeholder.src = "assets/cube_placeholder.png";
 						placeholder.classList.add("card-img");
 						card.appendChild(placeholder);
 					}
@@ -332,7 +383,7 @@
 					card.classList.add("card");
 
 					let img = document.createElement("IMG");
-					img.src = "folder.svg";
+					img.src = "assets/folder.svg";
 					img.classList.add("card-img");
 					card.appendChild(img);
 
@@ -415,6 +466,19 @@
 				<button id="load-auth" class="button">Load File</button>
 			</div>
 		</div>
+		<div id="popup-background-new-folder" class="popup-background">
+			<span class="helper"></span>
+			<div>
+				<center>
+					<img src="assets/folder.svg" width=100 height=auto />
+					<p>New Folder</p>
+					Name:<input type="text" id="new-folder-name"/>
+					<br/>
+					<button id="submit-new-folder" class="button">Submit</button>
+					<button id="cancel-new-folder" class="button">Cancel</button>
+				</center>
+			</div>
+		</div>
 		<div id="contextMenu" class="context-menu" 
 			style="display:none"> 
 			<ul> 
@@ -424,7 +488,8 @@
 				<li id="context-delete"><a href="#">Delete</a></li> 
 			</ul> 
 		</div>
-		<button id="back" class="button">Back</button> 
+		<button id="back" class="button">Back</button>
+		<button id="create-folder" class="button">+ Folder</button> 
 		<button id="upload" class="button">Upload</button>
 		<button id="auth" class="button">Set Auth</button>
 		<div id="working-directory"></div>
