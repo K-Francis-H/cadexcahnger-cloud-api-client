@@ -166,25 +166,27 @@
 					});
 				});
 
-				/*function getParentFolder(){
+				function getParentFolder(user){
 					if(!top(BACK_STACK)){
 						return user.rootFolder;
 					}else{
 						return top(BACK_STACK).id;
 					}
-				}*/
+				}
 
 				ipcRenderer.on('fileUploadData', (event, data) => {
 					console.log(data);
 					//TODO figure out context and upload file or wahtever
-					let args = {
-						fileName : data.name,
-						parentFolder : top(BACK_STACK).id
-					};
-					API.v1.DATA.POST.FILES(args, (res) => {
-						console.log(res.toString());
-						console.log(res);
-						refresh(top(BACK_STACK));
+					API.meta.getUserInfo( (user) => {
+						let args = {
+							fileName : data.name,
+							parentFolder : getParentFolder(user)
+						};
+						API.v1.DATA.POST.FILES(args, (res) => {
+							console.log(res.toString());
+							console.log(res);
+							refresh(top(BACK_STACK));
+						});
 					});
 				});
 
