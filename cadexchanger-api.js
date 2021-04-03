@@ -189,8 +189,21 @@ module.exports = function(authObj){
 								callback(res.user);
 							});
 						});
+					},
+
+					SUBSCRIPTION : function(callback){
+						checkAuth(authObj, () => {
+							checkInfo( (res) => {
+								USER_INFO = res;
+								console.log(res);
+								console.log(USER_INFO);
+								getRequest(setAuth(TOKEN, SUBSCRIPTIONS_ID(USER_INFO.subscription)), callback);
+							});
+						});
 					}
 				}
+
+				
 			},
 
 			DATA : {
@@ -796,6 +809,13 @@ const GET_USERS_ME = {
 	method : "GET",
 	path : "/users/me"
 };
+
+function SUBSCRIPTIONS_ID(id){
+	return {
+		method: "GET",
+		path: "/subscriptions/"+id
+	};
+}
 
 function FILES(method, query){
 	//methods : {GET, POST}

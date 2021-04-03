@@ -601,6 +601,10 @@
 				return params;
 			}
 
+			function setupSubscriptionInfo(){
+				
+			}
+
 			document.addEventListener("DOMContentLoaded", () => {
 				let FILE;
 				const {ipcRenderer} = require("electron");
@@ -619,6 +623,28 @@
 
 				document.getElementById("export-format-select").appendChild(exportFormatSelect);
 				exportFormatSelect.onchange();
+
+				//setup subscription info
+				API.v1.ACCOUNT.GET.SUBSCRIPTION( (result) => {
+					console.log(result);
+					console.log(result.subscription);
+					let type = result.subscription.type;
+					let usedStorage = result.subscription.occupiedStorageSpace;
+					let fileCount = result.subscription.filesCount;
+					let conversionCount = result.subscription.conversionCount;
+					let limits = getMonthlyLimits(type);
+
+					//now fill out html document stuff
+					document.getElementById("storage").innerText = prettySize(usedStorage);
+					document.getElementById("storage-limit").innerText = limits.storage;
+					document.getElementById("files").innerText = fileCount;
+					document.getElementById("files-limit").innerText = limits.files;
+					document.getElementById("conversions").innerText = conversionCount;
+					document.getElementById("conversions-limit").innerText = limits.conversions;
+					document.getElementById("max-file-size").innerText = limits.maxFileSize;
+					
+					
+				});
 
 				//setup buttons
 				document.getElementById("back").addEventListener("click", () => {
@@ -751,6 +777,24 @@
 			});
 			console.log(location);
 
+			function getMonthlyLimits(subscriptionType){
+				if(subscriptionType === "free"){
+					return {
+						storage : "500MB",
+						maxFileSize : "50MB",
+						files : 10,
+						conversions : 10
+					};
+				}else if(subscriptionType === "pro"){
+					return {
+						storage : "5GB",
+						maxFileSize : "100MB",
+						files : "unlimited",
+						conversions : 100
+					};
+				}
+			}
+
 			//NOTE OBJ conversion does not work
 			//STL works
 			//STEP works?
@@ -770,7 +814,13 @@
 				<img src="assets/loading.gif" width="64" height="64"/>
 			</div>
 		</div>
-		<button id="back" class="button">Back</button> 
+		<button id="back" class="button">Back</button>
+		<span>
+			Storage:&nbsp;<span id="storage"></span>/<span id="storage-limit"></span>
+			Files:&nbsp;<span id="files"></span>/<span id="files-limit"></span>
+			Conversions:&nbsp;<span id="conversions"></span>/<span id="conversions-limit"></span>
+			Max File Size:&nbsp;<span id="max-file-size"></span>
+		</span> 
 		</br></br></br></br></br></br>
 		<div id="file-section">
 			<!--put file in here-->
